@@ -71,17 +71,18 @@ Once the app is running, the user should follow these steps:
 * Press an arrow on the keyboard
 * Images should start displaying on the GUI
 * Footage viewer instructions:
-** Up arrow: Pause
-** Rigth arrow: Play
-** Left arrow: Rewind
-** Timer on the under the image shows current time along the station (starts on 00:00, should finish on 10:00 for 10 minute stations)
-** Speed selector next to the timer to amke the 'video' slower
-** Non-countable time: use 'start', 'stop', and 'confirm' buttons to log in non-countable time (i.e. sand cloud covering the image) -> app_outcome/non_countable_time
-** Annotation of footage:
-*** Pause the footage and click on the burrow you want to annotate. A blue circle will appear where you clicked, and a new row will be added on the table to the right of the image.
-*** To delete annotations: select the row you want to delete on the table. Press 'Delete all burrows in current image' button
-*** This table will update live a .csv file called surveyID_stationID_counterID_counts.csv inside app_outcome/counts
-** Ancillary data: fill all the radio buttons on the top-right and press 'Save ancillary data to .csv' to do so -> app_outcome/ancillary
+  * Up arrow: Pause
+  * Rigth arrow: Play
+  * Left arrow: Rewind
+  * Timer on the under the image shows current time along the station (starts on 00:00, should finish on 10:00 for 10 minute stations)
+  * Speed selector next to the timer to amke the 'video' slower
+  * Non-countable time: use 'start', 'stop', and 'confirm' buttons to log in non-countable time (i.e. sand cloud covering the image) -> app_outcome/non_countable_time
+  * Ancillary data: fill all the radio buttons on the top-right and press 'Save ancillary data to .csv' to do so -> app_outcome/ancillary
+  * Annotation of footage:
+    * Pause the footage and click on the burrow you want to annotate. A blue circle will appear where you clicked, and a new row will be added on the table to the right of the image.
+    * To delete annotations: select the row you want to delete on the table. Press 'Delete all burrows in current image' button
+    * This table will update live a .csv file called surveyID_stationID_counterID_counts.csv inside app_outcome/counts
+
 
 
 
