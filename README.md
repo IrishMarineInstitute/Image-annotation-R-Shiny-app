@@ -74,7 +74,7 @@ Once the app is running, the user should follow these steps:
   * Up arrow: Pause
   * Rigth arrow: Play
   * Left arrow: Rewind
-  * Timer on the under the image shows current time along the station (starts on 00:00, should finish on 10:00 for 10 minute stations)
+  * Timer on the under the image shows current time along the station (starts on 00:00, and should finish on 10:00 for 10 minute stations)
   * Speed selector next to the timer to amke the 'video' slower
   * Non-countable time: use 'start', 'stop', and 'confirm' buttons to log in non-countable time (i.e. sand cloud covering the image) -> app_outcome/non_countable_time
   * Ancillary data: fill all the radio buttons on the top-right and press 'Save ancillary data to .csv' to do so -> app_outcome/ancillary
