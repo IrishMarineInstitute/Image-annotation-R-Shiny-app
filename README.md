@@ -5,18 +5,15 @@
 
 ## Dependencies
 
-The app has only been tested in Windows 10 and 7. For better performance of the app we suggest to run it on Google Chrome.  
-
-
-It was built using R (Version 3.5.2), RStudio (Version 1.1.463) and the following R libraries:  
-"colorspace", "DT", "exifr", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets"
-
+The app was built using R (Version 3.5.2), RStudio (Version 1.1.463) and the following R libraries:  
+"colorspace", "DT", "exifr", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets"  
 
 Two additional software were used to ensure correct extraction of exif information from the images:
 
 * ActivePerl (Version 5.26). https://www.activestate.com/products/activeperl/
 * ExifTool (Version 11.26). https://sno.phy.queensu.ca/~phil/exiftool/index.html
 
+The app has only been tested in Windows 10 and 7. For better performance we suggest to use Google Chrome for the GUI.
 
 
 
