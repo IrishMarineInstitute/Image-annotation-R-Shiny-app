@@ -5,7 +5,7 @@
 
 ## Dependencies
 
-The app has only been tested in Windows 10 and 7.  
+The app has only been tested in Windows 10 and 7. For better performance of the app we suggest to run it on Google Chrome.  
 
 
 It was built using R (Version 3.5.2), RStudio (Version 1.1.463) and the following R libraries:  
@@ -16,6 +16,7 @@ Two additional software were used to ensure correct extraction of exif informati
 
 * ActivePerl (Version 5.26). https://www.activestate.com/products/activeperl/
 * ExifTool (Version 11.26). https://sno.phy.queensu.ca/~phil/exiftool/index.html
+
 
 
 
@@ -59,7 +60,28 @@ To ensure proper functioning of the app, the images must be:
 Inside the subsubfolder for the counts we will have a .csv file called "SURVEYS_and_COUNTERS.csv" with three columns: "survey", "counter" and "VideoOperatorID". This .csv file must be filled out by the SIC.  
 
 
+## app GUI
 
+Once the app is running, the user should follow these steps:
+* Select a Survey ID
+* Select a Counter ID
+* Select a Station ID
+* Press "load" button
+* Check if number of images is correct
+* Press an arrow on the keyboard
+* Images should start displaying on the GUI
+* Footage viewer instructions:
+** Up arrow: Pause
+** Rigth arrow: Play
+** Left arrow: Rewind
+** Timer on the under the image shows current time along the station (starts on 00:00, should finish on 10:00 for 10 minute stations)
+** Speed selector next to the timer to amke the 'video' slower
+** Non-countable time: use 'start', 'stop', and 'confirm' buttons to log in non-countable time (i.e. sand cloud covering the image) -> app_outcome/non_countable_time
+** Annotation of footage:
+*** Pause the footage and click on the burrow you want to annotate. A blue circle will appear where you clicked, and a new row will be added on the table to the right of the image.
+*** To delete annotations: select the row you want to delete on the table. Press 'Delete all burrows in current image' button
+*** This table will update live a .csv file called surveyID_stationID_counterID_counts.csv inside app_outcome/counts
+** Ancillary data: fill all the radio buttons on the top-right and press 'Save ancillary data to .csv' to do so -> app_outcome/ancillary
 
 
 
