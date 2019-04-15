@@ -5,16 +5,16 @@
 
 ## Dependencies
 
-### The app has only been tested in Windows 10 and 7.
+The app has only been tested in Windows 10 and 7.  
 
-### It was built using R (Version 3.5.2), RStudio (Version 1.1.463) and the following R libraries:
 
+It was built using R (Version 3.5.2), RStudio (Version 1.1.463) and the following R libraries:  
 "colorspace", "DT", "exifr", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets"
 
-### Two additional sofwtare were used to ensure correct extraction of exif information from the images:
+
+Two additional software were used to ensure correct extraction of exif information from the images:
 
 * ActivePerl (Version 5.26). https://www.activestate.com/products/activeperl/
-
 * ExifTool (Version 11.26). https://sno.phy.queensu.ca/~phil/exiftool/index.html
 
 
@@ -51,10 +51,33 @@ To ensure proper functioning of the app, the images must be:
 
 #### Subfolder for the outputs:
 * No need to set up in the code.  
-* Example: C:/Parent_folder/app_outcome  
+* Specific name: C:/Parent_folder/app_outcome  
 * Inside this subfolder we will have three subsubfolders for different outputs:  
 * C:/Parent_folder/app_outcome/ancillary  
 * C:/Parent_folder/app_outcome/non_countable_time  
 * C:/Parent_folder/app_outcome/counts  
-Inside the subsubfolder for the counts we will have a .csv fie called "SURVEYS_and_COUNTERS.csv" with three columns: "survey", "counter" and "VideoOperatorID". This .csv file must be filled out by the SIC.
+Inside the subsubfolder for the counts we will have a .csv file called "SURVEYS_and_COUNTERS.csv" with three columns: "survey", "counter" and "VideoOperatorID". This .csv file must be filled out by the SIC.  
 
+
+
+
+
+
+## Patches and pull requests
+
+Your patches are welcome. Here's the suggested workflow:
+ 
+* Fork the project.
+* Make your feature addition or bug fix.
+* Send a pull request with a description of your work.
+
+
+## Author
+Mikel Aristegui  
+Fisheries Ecosystems Advisory Services,  
+Marine Institute / Foras na Mara,  
+Ireland
+
+
+## License
+Released under the [GNU AGPLv3 license] https://github.com/IrishMarineInstitute/nephrops-burrow-counting-app/blob/master/LICENSE.md
