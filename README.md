@@ -1,6 +1,6 @@
 # *Image annotation app for UWTV surveys*
 
-*This R Shiny application was built to annotate HD-stills from _Nephrops_ norvegicus UWTV surveys carried out by the Marine Institute.*
+This R Shiny application was built to annotate HD-stills from _Nephrops norvegicus_ UWTV surveys carried out by the Marine Institute.
 
 
 ## Dependencies
