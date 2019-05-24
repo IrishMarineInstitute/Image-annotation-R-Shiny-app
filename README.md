@@ -1,6 +1,6 @@
-# *Image annotation app for UWTV surveys*
+# *Image annotation R Shiny app*
 
-This R Shiny application was built to annotate HD-stills from _Nephrops norvegicus_ UWTV surveys carried out by the Marine Institute.
+This R Shiny application was built to annotate footage (HD-stills) from _Nephrops norvegicus_ UWTV surveys carried out by the Marine Institute.
 
 
 ## Dependencies
@@ -97,6 +97,8 @@ Mikel Aristegui
 Fisheries Ecosystems Advisory Services,  
 Marine Institute / Foras na Mara,  
 Ireland
+
+mikel.aristegui@marine.ie
 
 
 ## License
