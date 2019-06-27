@@ -86,10 +86,13 @@ Once the app is running, the user should follow these steps:
 ## Patches and pull requests
 
 Your patches are welcome. Here's the suggested workflow:
- 
 * Fork the project.
 * Make your feature addition or bug fix.
 * Send a pull request with a description of your work.
+
+Or as an alternative:
+* Report your bugs/feature requests using the github issues tab.
+
 
 
 ## Author
