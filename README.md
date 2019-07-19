@@ -94,7 +94,6 @@ Or as an alternative:
 * Report your bugs/feature requests using the github issues tab.
 
 
-
 ## Author
 Mikel Aristegui  
 Fisheries Ecosystems Advisory Services,  
@@ -102,6 +101,10 @@ Marine Institute / Foras na Mara,
 Ireland
 
 mikel.aristegui@marine.ie
+
+To cite this software, please use the following text:
+
+Aristegui , M. (2019) Image annotation R Shiny app. Marine Institute. http://doi.org/c8jt
 
 
 ## License
