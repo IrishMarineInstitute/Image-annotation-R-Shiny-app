@@ -31,14 +31,14 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            uiOutput("surveyID")), # 1st select Survey
     column(1,
            uiOutput("counterID")), # 2nd select Counter
-    column(2,
+    column(1,
            uiOutput("stationID")), # 3rd select Station
-    column(2,
-           actionButton("start", "4th: Click here to load stn")), # 4th press button to load station
+    column(1,
+           actionButton("start", "4th: Load stn")), # 4th press button to load station
     column(2,
            tags$h6("5th: press an arrow to start"), # 5th press arrow on keyboard to plot images on screen
            tags$h6("up=PAUSE ; right=PLAY ; left=REWIND")), # app driving instructions
-    column(2,
+    column(1,
            tags$h6("Folder selected"),
            verbatimTextOutput("directorypath")), # check folder where the images come from (to check station number is correct)
     column(1,
@@ -72,24 +72,30 @@ ui <- fluidPage(theme = shinytheme("superhero"),
     column(4,
            fluidRow(
              hr(),
-             column(2,radioButtons("trawl", "Trawl marks", choices = list("yes","no"), selected=NA)),
-             column(2,radioButtons("vm", "Virgularia mirabilis", choices = list("yes","no"), selected=NA)),
-             column(2,radioButtons("fq", "Funiculina quadrangularis", choices = list("yes","no"), selected=NA)),
-             column(2,radioButtons("pp", "Pennatula phosphorea", choices = list("yes","no"), selected=NA)),
-             column(2,radioButtons("kp", "KOP", choices = list("yes","no"), selected=NA)),
-             column(2,radioButtons("sl", "Squat lobster", choices = list("yes","no"), selected=NA))),
+             column(2, uiOutput("vm")),
+             column(2, uiOutput("fq")),
+             column(2, uiOutput("pp")),
+             column(2, uiOutput("kp")),
+             column(2, uiOutput("trawl")),
+             column(2, uiOutput("lt"))),
            
            fluidRow(
-             column(2, textOutput("nepInN"),
-                    actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
+             column(2, uiOutput("lm")),
+             column(2, uiOutput("sl")),
+             column(2, uiOutput("fs")),
+             column(6, uiOutput("comm"))),
+           
+           fluidRow(
              
-             column(2,textOutput("nepOutN"),
-                    actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm")),
+             column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
+             column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm")),
+
+             
              br(),
              
              # save button to write ancillary data to .csv file
-             column(4,
-                    actionButton("anciSave", "Save ancillary data to .csv"), offset = 1)),
+             column(2,
+                    actionButton("anciSave", "Save ancillary data to .csv"), offset = 0)),
            
            hr(),
            
@@ -542,19 +548,24 @@ server <- function(input, output, session) {
                                                                                           "VideoOperatorID",
                                                                                           "minute")))
   ## Table for ancillary data  
-  rvAncillary <- reactiveValues(tableAncillary = setNames(data.frame(matrix(ncol = 12, nrow = 0)), c("survey",
-                                                                                                     "station",
-                                                                                                     "counter_ID",
-                                                                                                     "trawl_marks",
-                                                                                                     "VAM", "FAQ", "PNP", "KOP",
-                                                                                                     "squat_lobster",
-                                                                                                     "Nephrops_IN",
-                                                                                                     "Nephrops_OUT",
-                                                                                                     "VideoOperatorID")))
+  n_variables <- 16
+  rvAncillary <- reactiveValues(tableAncillary = setNames(data.frame(matrix(ncol = n_variables, nrow = 0)), c("survey",
+                                                                                                              "station",
+                                                                                                              "counter_ID",
+                                                                                                              "VAM", "FAQ", "PNP", "KOP",
+                                                                                                              "LMC", "squat_lobster", "fish",
+                                                                                                              "Nephrops_IN",
+                                                                                                              "Nephrops_OUT",
+                                                                                                              "trawl_marks",
+                                                                                                              "litter",
+                                                                                                              "Comments",
+                                                                                                              "VideoOperatorID"
+                                                                                                              )))
 
   
   # If the .csv files for these tables are already created, then read them when clicking step 4:
   observeEvent({input$start}, {
+    # annotations
     if(file_test("-f",
                  paste0(as.character(volumes_parent[1]),
                         "/app_outcome/counts/",
@@ -567,7 +578,26 @@ server <- function(input, output, session) {
                                       "_counts.csv"),
                                colClasses = rep("character", 11))
     }
+    # ancillary
+    if(file_test("-f",
+                 paste0(as.character(volumes_parent[1]),
+                        "/app_outcome/ancillary/",
+                        input$inSurveyID,
+                        "_", input$inStationID,
+                        "_", input$inCounterID,
+                        "_ancillary.csv")) == T) {
+      rvTime$tableAncillary <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/ancillary/",
+                                          input$inSurveyID,
+                                          "_", input$inStationID,
+                                          "_", input$inCounterID,
+                                          "_ancillary.csv"),
+                                   colClasses = rep("character", n_variables))
+    } else {
+        rvTime$tableAncillary <- data.frame("Nephrops_IN" = 0,
+                                            "Nephrops_OUT" = 0)
+        }
     
+    # non-countable time
     if(file_test("-f",
                  paste0(as.character(volumes_parent[1]),
                         "/app_outcome/non_countable_time/",
@@ -583,7 +613,75 @@ server <- function(input, output, session) {
                                    colClasses = rep("character", 8))
     }
   })
+  
+  # ANCILLARY data table
+  
+  output$vm <- renderUI({
+    selectInput("invm", "VAM", choices = list("no","yes"), selected=rvTime$tableAncillary$VAM)
+  })
+  output$fq <- renderUI({
+    selectInput("infq", "FAQ", choices = list("no","yes"), selected=rvTime$tableAncillary$FAQ)
+  })
+  output$pp <- renderUI({
+    selectInput("inpp", "PNP", choices = list("no","yes"), selected=rvTime$tableAncillary$PNP)
+  })
+  output$kp <- renderUI({
+    selectInput("inkp", "KOP", choices = list("no","yes"), selected=rvTime$tableAncillary$KOP)
+  })
+  output$lm <- renderUI({
+    selectInput("inlm", "LMC", choices = list("no","yes"), selected=rvTime$tableAncillary$LMC)
+  })
+  output$sl <- renderUI({
+    selectInput("insl", "Squat", choices = list("no","yes"), selected=rvTime$tableAncillary$squat_lobster)
+  })
+  output$fs <- renderUI({
+    selectInput("infs", "Fish", choices = list("no","yes"), selected=rvTime$tableAncillary$fish)
+  })
+  output$comm <- renderUI({
+    textAreaInput("incomm", "Comments", value=rvTime$tableAncillary$Comments, placeholder="Add comments here")
+  })
+  
+  output$nepInN <- renderUI({
+    textOutput(rvTime$tableAncillary$Nephrops_IN)
+  })
+  output$nepOutN <- renderUI({
+    textOutput(rvTime$tableAncillary$Nephrops_OUT)
+  })
+  
+  output$trawl <- renderUI({
+    selectInput("intrawl", "Trawl marks", choices = list("no","yes"), selected=rvTime$tableAncillary$trawl_marks)
+  })
+  output$lt <- renderUI({
+    selectInput("inlt", "Litter", choices = list("no","yes"), selected=rvTime$tableAncillary$litter)
+  })
 
+  
+  # clicking on the save button will create a .csv file with the ancillary data
+  observeEvent({input$anciSave},{
+    
+      rvAncillary$tableAncillary[1,] = c(input$inSurveyID,
+                                         input$inStationID,
+                                         input$inCounterID,
+                                         input$invm, input$infq, input$inpp, input$inkp,
+                                         input$inlm, input$insl, input$infs,
+                                         (as.numeric(rvTime$tableAncillary$Nephrops_IN) + input$nepInmore - input$nepInless),
+                                         (as.numeric(rvTime$tableAncillary$Nephrops_OUT) + input$nepOutmore - input$nepOutless),
+                                         input$intrawl,
+                                         input$inlt,
+                                         input$incomm,
+                                         VidOpID())
+
+      write.table(rvAncillary$tableAncillary,
+                  file = paste0(as.character(volumes_parent[1]), "/app_outcome/ancillary/",
+                                input$inSurveyID,
+                                "_",input$inStationID,
+                                "_", input$inCounterID,
+                                "_ancillary.csv"),
+                  row.names = F,
+                  sep = ",")
+    
+  })
+  
     
   # NON-COUNTABLE TIME
   textStartStop <- reactiveValues(start = integer(0),
@@ -635,41 +733,7 @@ server <- function(input, output, session) {
   })
   
   
-  # ANCILLARY data table
-  
-  # clicking on the save button will create a .csv file with the ancillary data
-  observeEvent({input$anciSave},{
-    
-    if (is.null(input$trawl)|is.null(input$vm)|is.null(input$fq)|is.null(input$pp)|is.null(input$kp)|is.null(input$sl)){
-      # All the ancillary fields must be filled
-      
-      showModal(modalDialog(title ="Warning:",
-                            HTML("Remember to select presence/absence for all the ancillary data:<br>
-                                 Trawl marks, VAM, FAQ, PNP, KOP, Squat lobster, Nephrops In, Nephrops Out")))
-      
-    } else {
 
-      rvAncillary$tableAncillary[1,] = c(input$inSurveyID,
-                                         input$inStationID,
-                                         input$inCounterID,
-                                         input$trawl,
-                                         input$vm, input$fq, input$pp, input$kp,
-                                         input$sl,
-                                         input$nepInmore - input$nepInless,
-                                         input$nepOutmore - input$nepOutless,
-                                         VidOpID())
-
-      write.table(rvAncillary$tableAncillary,
-                  file = paste0(as.character(volumes_parent[1]), "/app_outcome/ancillary/",
-                                input$inSurveyID,
-                                "_",input$inStationID,
-                                "_", input$inCounterID,
-                                "_ancillary.csv"),
-                  row.names = F,
-                  sep = ",")
-    }
-    
-  })
   
   
   
@@ -866,12 +930,13 @@ observeEvent(input$confirmYes, {
 
 
 # Ancillary data for Nephrops in and out
+
 output$nepInN <- renderText({
-  paste0("Nephrops IN: ", (input$nepInmore - input$nepInless))
+  paste0("Nephrops IN: ", (as.numeric(rvTime$tableAncillary$Nephrops_IN) + input$nepInmore - input$nepInless))
 })
   
 output$nepOutN <- renderText({
-  paste0("Nephrops OUT: ", (input$nepOutmore - input$nepOutless))
+  paste0("Nephrops OUT: ", (as.numeric(rvTime$tableAncillary$Nephrops_OUT) + input$nepOutmore - input$nepOutless))
 })
 
 
