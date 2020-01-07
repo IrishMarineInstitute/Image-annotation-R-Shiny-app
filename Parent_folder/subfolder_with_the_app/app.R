@@ -27,7 +27,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
 
   # TOP ROW: 5 steps to start the app:
   fluidRow(
-    column(2,
+    column(1,
            uiOutput("surveyID")), # 1st select Survey
     column(1,
            uiOutput("counterID")), # 2nd select Counter
@@ -39,11 +39,38 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            tags$h6("5th: press an arrow to start"), # 5th press arrow on keyboard to plot images on screen
            tags$h6("up=PAUSE ; right=PLAY ; left=REWIND")), # app driving instructions
     column(1,
-           tags$h6("Folder selected"),
-           verbatimTextOutput("directorypath")), # check folder where the images come from (to check station number is correct)
-    column(1,
            tags$h6("stills for this station"),
            verbatimTextOutput("jpgnumber")), # check number of images on the folder/station
+    column(4,
+           tags$h6("Folder selected"),
+           verbatimTextOutput("directorypath")), # check folder where the images come from (to check station number is correct)
+    tags$style("#directorypath{font-size: 13px}"),
+
+    # License
+    column(1, actionButton("lic", "code & license")),
+    tags$head(tags$style("#lic{font-size: 12px}")),
+    bsModal("lice", "License", "lic", size = "medium",
+            HTML("
+    Image annotation R Shiny app <br>
+    Copyright (C) 2019. Mikel Aristegui * <br><br>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version. <br><br>
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details. <br><br>
+
+    <div>
+    <p>You should have received a copy of the GNU Affero General Public License
+      along with this program. If not, see <a href=https://www.gnu.org/licenses/>https://www.gnu.org/licenses/</a>.</p>
+    </div>
+    <hr>
+    <p>Full code and license availabe at <a href=https://github.com/IrishMarineInstitute/nephrops-burrow-counting-app/>GitHub repo</a>.</p>
+    * mikel.aristegui@marine.ie")), 
     
     # Setting for keyboard inputs
             tags$script('
@@ -71,7 +98,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
     # Ancillary data inputs and save button
     column(4,
            fluidRow(
-             hr(),
+             #hr(),
              column(2, uiOutput("vm")),
              column(2, uiOutput("fq")),
              column(2, uiOutput("pp")),
@@ -85,13 +112,13 @@ ui <- fluidPage(theme = shinytheme("superhero"),
              column(2, uiOutput("fs")),
              column(6, uiOutput("comm"))),
            
-           fluidRow(
+           fluidRow(style = "height:35px;",
              
              column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
              column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm")),
 
              
-             br(),
+             #br(),
              
              # save button to write ancillary data to .csv file
              column(2,
@@ -149,33 +176,9 @@ fluidRow(
   # Input for non-countable time (i.e. footage with sand clouds)
   column(2, textOutput("textTime"),
          actionGroupButtons(c("startTime","stopTime", "confirmTime"), c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
-                            direction="horizontal", size="normal")),
+                            direction="horizontal", size="normal"))),
   
-  # License
-  column(1, actionButton("lic", "code & license"), offset=5),
-  tags$head(tags$style("#lic{font-size: 12px}")),
-  bsModal("lice", "License", "lic", size = "medium",
-          HTML("
-    Image annotation R Shiny app <br>
-    Copyright (C) 2019. Mikel Aristegui * <br><br>
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version. <br><br>
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details. <br><br>
-
-    <div>
-    <p>You should have received a copy of the GNU Affero General Public License
-      along with this program. If not, see <a href=https://www.gnu.org/licenses/>https://www.gnu.org/licenses/</a>.</p>
-    </div>
-    <hr>
-    <p>Full code and license availabe at <a href=https://github.com/IrishMarineInstitute/nephrops-burrow-counting-app/>GitHub repo</a>.</p>
-    * mikel.aristegui@marine.ie"))), 
 
 
 # BOTTOM ROW: Slider
@@ -207,7 +210,7 @@ server <- function(input, output, session) {
   
   # Dynamic dropdown for surveyID
   output$surveyID <- renderUI({
-    selectInput("inSurveyID", "1st: select current survey",
+    selectInput("inSurveyID", "1st: current survey",
                 c("select survey", surveys)
     )
   })
@@ -544,14 +547,15 @@ server <- function(input, output, session) {
                                                                                        "VideoOperatorID",
                                                                                        "minute")))
   ## Table for non-countable time  
-  rvTime <- reactiveValues(tableTime = setNames(data.frame(matrix(ncol = 8, nrow = 0)), c("survey",
+  rvTime <- reactiveValues(tableTime = setNames(data.frame(matrix(ncol = 9, nrow = 0)), c("survey",
                                                                                           "station",
                                                                                           "counter_ID",
                                                                                           "start_non_countable",
                                                                                           "stop_non_countable",
                                                                                           "feature",
                                                                                           "VideoOperatorID",
-                                                                                          "minute")))
+                                                                                          "minute",
+                                                                                          "seconds")))
   ## Table for ancillary data  
   n_variables <- 16
   rvAncillary <- reactiveValues(tableAncillary = setNames(data.frame(matrix(ncol = n_variables, nrow = 0)), c("survey",
@@ -643,7 +647,7 @@ server <- function(input, output, session) {
     selectInput("infs", "Fish", choices = list("no","yes"), selected=rvTime$tableAncillary$fish)
   })
   output$comm <- renderUI({
-    textAreaInput("incomm", "Comments", value=rvTime$tableAncillary$Comments, placeholder="Add comments here")
+    textAreaInput("incomm", "Comments", value=rvTime$tableAncillary$Comments, height = "35px", placeholder="Add comments here")
   })
   
   output$nepInN <- renderUI({
@@ -723,7 +727,8 @@ server <- function(input, output, session) {
                                                       textStartStop$stop,
                                                       "non_countable_time",
                                                       VidOpID(),
-                                                      as.numeric(substring(textStartStop$start, 4, 5)) + 1)
+                                                      as.numeric(substring(textStartStop$start, 4, 5)) + 1,
+                                                      substring(textStartStop$start, 7,9):substring(textStartStop$stop, 7,9))
       
       write.table(rvTime$tableTime,
                 file = paste0(as.character(volumes_parent[1]), "/app_outcome/non_countable_time/",
@@ -733,6 +738,14 @@ server <- function(input, output, session) {
                               "_non_countable_time.csv"),
                 row.names = F,
                 sep = ",")
+      
+      non_calc <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/",
+                                  input$inSurveyID,
+                                  "_", input$inStationID,
+                                  "_", input$inCounterID,
+                                  "_non_countable_time.csv"),
+                           colClasses = rep("character", 8))
+      
     }
     
   })
