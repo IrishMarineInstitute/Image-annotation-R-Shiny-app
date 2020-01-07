@@ -115,8 +115,8 @@ ui <- fluidPage(theme = shinytheme("superhero"),
 fluidRow(
   
   # Reset button to delete all the annotated images and created .csv files for current Survey & Counter & Station
-  column(2,
-         actionButton("reset", "Reset all my counts"),
+  column(1,
+         actionButton("reset", "Reset my counts"),
          tags$head(tags$style("#confirmReset{color: red;
                               font-size: 40px;
                               font-style: bold;
@@ -131,10 +131,13 @@ fluidRow(
                  actionButton("confirmNo", "No"))
          ),
   
-  # Input for non-countable time (i.e. footage with sand clouds)
-  column(2, textOutput("textTime"),
-         actionGroupButtons(c("startTime","stopTime", "confirmTime"), c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
-                            direction="horizontal", size="normal")),
+  # Speed selector
+  column(1, selectInput("speed", "Speed",
+                        choices = c("normal", "slow", "very slow", "super slow"), selected="normal")),
+  column(1, tags$h6("(in lower speeds you'll need to pause the video before swaping between play/rewind)")),# speed issue info for user
+  
+
+  
   # Current time info
   column(1,
          textOutput("timer"),
@@ -142,12 +145,14 @@ fluidRow(
          tags$head(tags$style("#timer{color: green;
                        font-size: 40px;
                        }"))),
-  # Speed selector
-  column(1, selectInput("speed", "Speed",
-                         choices = c("normal", "slow", "very slow", "super slow"), selected="normal")),
-  column(1, tags$h6("(in lower speeds you'll need to pause the video before swaping between play/rewind)")),# speed issue info for user
   
-  column(1, actionButton("lic", "code & license"), offset=4),
+  # Input for non-countable time (i.e. footage with sand clouds)
+  column(2, textOutput("textTime"),
+         actionGroupButtons(c("startTime","stopTime", "confirmTime"), c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
+                            direction="horizontal", size="normal")),
+  
+  # License
+  column(1, actionButton("lic", "code & license"), offset=5),
   tags$head(tags$style("#lic{font-size: 12px}")),
   bsModal("lice", "License", "lic", size = "medium",
           HTML("
