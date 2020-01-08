@@ -174,9 +174,23 @@ fluidRow(
                        }"))),
   
   # Input for non-countable time (i.e. footage with sand clouds)
-  column(2, textOutput("textTime"),
+  column(1, verbatimTextOutput("textTime"),
          actionGroupButtons(c("startTime","stopTime", "confirmTime"), c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
-                            direction="horizontal", size="normal"))),
+                            direction="horizontal", size="s")),
+  
+  column(2, div(style = 'overflow-x: scroll', DTOutput("non_seconds_table"))),
+
+  # Output datatable for the user. To check the non-countable time
+  # setting of the datatable
+  # tags$style(HTML(".dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing,.dataTables_wrapper .dataTables_paginate .paginate_button, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  #                            color: #ffffff !important;
+  #                            }")),
+  # datatable
+  column(3, DTOutput("non_time_table"),
+         # Button to delete rows from datatable
+         actionButton("delete_time", "Delete row"))),
+
+
   
 
 
@@ -556,6 +570,13 @@ server <- function(input, output, session) {
                                                                                           "VideoOperatorID",
                                                                                           "minute",
                                                                                           "seconds")))
+  
+  rvSeconds <- reactiveValues(tableNonsecs = setNames(data.frame(matrix(ncol = 6, nrow = 20)), c("survey",
+                                                                                              "station",
+                                                                                              "counter_ID",
+                                                                                              "VideoOperatorID",
+                                                                                              "minute",
+                                                                                              "seconds_off")))
   ## Table for ancillary data  
   n_variables <- 16
   rvAncillary <- reactiveValues(tableAncillary = setNames(data.frame(matrix(ncol = n_variables, nrow = 0)), c("survey",
@@ -619,7 +640,23 @@ server <- function(input, output, session) {
                                           "_", input$inStationID,
                                           "_", input$inCounterID,
                                           "_non_countable_time.csv"),
-                                   colClasses = rep("character", 8))
+                                   colClasses = rep("character", 9))
+    }
+    
+    # seconds_off time
+    if(file_test("-f",
+                 paste0(as.character(volumes_parent[1]),
+                        "/app_outcome/non_countable_time/",
+                        input$inSurveyID,
+                        "_", input$inStationID,
+                        "_", input$inCounterID,
+                        "_seconds_off.csv")) == T) {
+      rvSeconds$tableNonsecs <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/",
+                                          input$inSurveyID,
+                                          "_", input$inStationID,
+                                          "_", input$inCounterID,
+                                          "_seconds_off.csv"),
+                                         colClasses = rep("character", 6))
     }
   })
   
@@ -704,9 +741,11 @@ server <- function(input, output, session) {
   })
   # showing to the operator the time section selected
   output$textTime <- renderText({
-    paste0("log non-countable time: ", substring(textStartStop$start, 4, 8 ), "-", substring(textStartStop$stop, 4, 8))
+    paste0("log non-countable time:\n", substring(textStartStop$start, 4, 8 ), "-", substring(textStartStop$stop, 4, 8))
   })
+  
   # clicking on the confirmTime button will create a .csv file with the new non-countable time section
+  # and create seconds_off table and .csv file
 
   observeEvent({input$confirmTime},{
     
@@ -728,7 +767,7 @@ server <- function(input, output, session) {
                                                       "non_countable_time",
                                                       VidOpID(),
                                                       as.numeric(substring(textStartStop$start, 4, 5)) + 1,
-                                                      substring(textStartStop$start, 7,9):substring(textStartStop$stop, 7,9))
+                                                      paste(substring(textStartStop$start, 7,9):substring(textStartStop$stop, 7,9), collapse="_"))
       
       write.table(rvTime$tableTime,
                 file = paste0(as.character(volumes_parent[1]), "/app_outcome/non_countable_time/",
@@ -744,7 +783,28 @@ server <- function(input, output, session) {
                                   "_", input$inStationID,
                                   "_", input$inCounterID,
                                   "_non_countable_time.csv"),
-                           colClasses = rep("character", 8))
+                           colClasses = rep("character", 9))
+
+      
+      
+      rvSeconds$tableNonsecs$survey <- input$inSurveyID
+      rvSeconds$tableNonsecs$station <- input$inStationID
+      rvSeconds$tableNonsecs$counter_ID <- input$inCounterID
+      rvSeconds$tableNonsecs$VideoOperatorID <- VidOpID()
+      rvSeconds$tableNonsecs$minute <- 1:20
+      for(i in unique(rvSeconds$tableNonsecs$minute)) {
+        non_calc_cur <- subset(non_calc, minute == i)
+        non_secs_cur <- length(unique(as.numeric(unlist(strsplit(non_calc_cur$seconds, '_')))))
+        rvSeconds$tableNonsecs[which(rvSeconds$tableNonsecs$minute == i),]$seconds_off <- non_secs_cur
+      }
+      write.table(rvSeconds$tableNonsecs,
+                  file = paste0(as.character(volumes_parent[1]), "/app_outcome/non_countable_time/",
+                                input$inSurveyID,
+                                "_",input$inStationID,
+                                "_", input$inCounterID,
+                                "_seconds_off.csv"),
+                  row.names = F,
+                  sep = ",")
       
     }
     
@@ -1008,6 +1068,33 @@ row.show <- reactive({
               options = list(dom = 'rtip', pageLength = 10, displayStart = row.show())) %>%
       formatStyle(0:5, color="white", backgroundColor = "grey")
   })
+  
+  # Showing the last 10 annotations by default in the table
+  row.show_time <- reactive({
+    if (nrow(rvTime$tableTime) < 11) {return(0)}
+    if (nrow(rvTime$tableTime) > 10) {return(nrow(rvTime$tableTime)-10)}
+  })
+  
+# Output of the non-countable-time table
+  output$non_time_table <- DT::renderDT({
+    DT::datatable(rvTime$tableTime[,c("station","counter_ID","start_non_countable","stop_non_countable","minute")], selection="single",
+                  options = list(dom = 'rtip', pageLength = 10, displayStart = row.show_time())) %>%
+      formatStyle(0:6, color="white", backgroundColor = "grey")
+  })
+  
+  
+  output$non_seconds_table <- DT::renderDT({
+    DT::datatable(t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")]), selection="single",
+                  options = list(dom = 'rt', headerCallback = JS("function(thead, data, start, end, display){",
+                                                                 "  $(thead).remove();",
+                                                                 "}"))) %>%
+      formatStyle(0:20, backgroundColor = JS("value < 31 ? 'green' : value > 30 ? 'red' : 'white'"), color = "grey")
+  })
+  
+  
+  # output$non_seconds_table <- renderTable(t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")]),
+  #                                         rownames=T, colnames=F)
+  
 
   
 } # END OF server
