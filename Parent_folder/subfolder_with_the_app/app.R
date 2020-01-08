@@ -1005,12 +1005,68 @@ observeEvent(input$confirmYes, {
                      "_counts.csv"))
   })
 
+# Delete non_countable_time row
+observeEvent(input$delete_time, {
+  
+  # It only works if there is a row from the table selected 
+  if(!is.null(input$non_time_table_rows_selected)) {
+    
+    
+    # delete selected row
+    rvTime$tableTime <- rvTime$tableTime[-input$non_time_table_rows_selected,]
+    
+    # Write non_countable_time and seconds_off .csv files
+
+    write.table(rvTime$tableTime,
+                file = paste0(as.character(volumes_parent[1]), "/app_outcome/non_countable_time/",
+                              input$inSurveyID,
+                              "_",input$inStationID,
+                              "_", input$inCounterID,
+                              "_non_countable_time.csv"),
+                row.names = F,
+                sep = ",")
+    
+    non_calc <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/",
+                                input$inSurveyID,
+                                "_", input$inStationID,
+                                "_", input$inCounterID,
+                                "_non_countable_time.csv"),
+                         colClasses = rep("character", 9))
+    
+    rvSeconds$tableNonsecs$survey <- input$inSurveyID
+    rvSeconds$tableNonsecs$station <- input$inStationID
+    rvSeconds$tableNonsecs$counter_ID <- input$inCounterID
+    rvSeconds$tableNonsecs$VideoOperatorID <- VidOpID()
+    rvSeconds$tableNonsecs$minute <- 1:20
+    for(i in unique(rvSeconds$tableNonsecs$minute)) {
+      non_calc_cur <- subset(non_calc, minute == i)
+      non_secs_cur <- length(unique(as.numeric(unlist(strsplit(non_calc_cur$seconds, '_')))))
+      rvSeconds$tableNonsecs[which(rvSeconds$tableNonsecs$minute == i),]$seconds_off <- non_secs_cur
+    }
+    write.table(rvSeconds$tableNonsecs,
+                file = paste0(as.character(volumes_parent[1]), "/app_outcome/non_countable_time/",
+                              input$inSurveyID,
+                              "_",input$inStationID,
+                              "_", input$inCounterID,
+                              "_seconds_off.csv"),
+                row.names = F,
+                sep = ",")
+
+    
+  } else {
+    showModal(modalDialog(title ="No row selected",
+                          HTML("To delete a row, please:<br>
+                               (1) selec a row in the table and<br>
+                               (2) press 'Delete row' button")))
+  }
+})
 
 
 # Ancillary data for Nephrops in and out
 
 output$nepInN <- renderText({
-  paste0("Nephrops IN: ", (as.numeric(rvTime$tableAncillary$Nephrops_IN) + input$nepInmore - input$nepInless))
+  input$non_time_table_rows_selected
+  # paste0("Nephrops IN: ", (as.numeric(rvTime$tableAncillary$Nephrops_IN) + input$nepInmore - input$nepInless))
 })
   
 output$nepOutN <- renderText({
@@ -1108,6 +1164,8 @@ row.show <- reactive({
     formatStyle(columns = 2,
                 target = "row",
                 backgroundColor = JS("value < 31 ? 'green' : value > 30 ? 'red' : 'white'"), color = "grey")
+    
+
   })
   
   
