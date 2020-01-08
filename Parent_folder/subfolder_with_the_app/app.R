@@ -33,7 +33,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            uiOutput("counterID")), # 2nd select Counter
     column(1,
            uiOutput("stationID")), # 3rd select Station
-    column(1,
+    column(1, br(),
            actionButton("start", "4th: Load stn")), # 4th press button to load station
     column(2,
            tags$h6("5th: press an arrow to start"), # 5th press arrow on keyboard to plot images on screen
@@ -53,6 +53,8 @@ ui <- fluidPage(theme = shinytheme("superhero"),
             HTML("
     Image annotation R Shiny app <br>
     Copyright (C) 2019. Mikel Aristegui * <br><br>
+
+    <p>Aristegui, M. (2019) Image annotation R Shiny app. Marine Institute. <a href=http://doi.org/c8jt >http://doi.org/c8jt</a></p>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -138,11 +140,12 @@ ui <- fluidPage(theme = shinytheme("superhero"),
   
   
   # MIDDLE 2nd ROW: Reset button, non-countable time input, current time info, speed selector
-  
+  #hr(),
 fluidRow(
   
   # Reset button to delete all the annotated images and created .csv files for current Survey & Counter & Station
   column(1,
+         br(),
          actionButton("reset", "Reset my counts"),
          tags$head(tags$style("#confirmReset{color: red;
                               font-size: 40px;
@@ -174,11 +177,11 @@ fluidRow(
                        }"))),
   
   # Input for non-countable time (i.e. footage with sand clouds)
-  column(1, verbatimTextOutput("textTime"),
+  column(2, verbatimTextOutput("textTime"),
          actionGroupButtons(c("startTime","stopTime", "confirmTime"), c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
-                            direction="horizontal", size="s")),
+                            direction="horizontal", size="sm")),
   
-  column(2, div(style = 'overflow-y: scroll', DTOutput("non_seconds_table", height="100px"))),
+  column(3, div(style = 'overflow-x: scroll', DTOutput("non_seconds_table"))),
 
   # Output datatable for the user. To check the non-countable time
   # setting of the datatable
@@ -186,9 +189,9 @@ fluidRow(
   #                            color: #ffffff !important;
   #                            }")),
   # datatable
-  column(3, DTOutput("non_time_table"),
+  column(3, div(style = 'overflow-y: scroll; height:150px', DTOutput("non_time_table")),
          # Button to delete rows from datatable
-         actionButton("delete_time", "Delete row"))),
+         actionButton("delete_time", "Delete row", style='padding:4px; font-size:80%'))),
 
 
   
@@ -806,6 +809,15 @@ server <- function(input, output, session) {
                   row.names = F,
                   sep = ",")
       
+      df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+      rvColor$df <- rvColor$df[1:2,-c(21:40)]
+      rvColor$df[1,] <- df[1,]
+      rvColor$df[2,] <- df[2,]
+      dataCol_df <- ncol(rvColor$df)
+      dataColRng <- 1:dataCol_df
+      argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+      rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
+      
     }
     
   })
@@ -1051,6 +1063,16 @@ observeEvent(input$delete_time, {
                               "_seconds_off.csv"),
                 row.names = F,
                 sep = ",")
+    
+    
+    df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+    rvColor$df <- rvColor$df[1:2,-c(21:40)]
+    rvColor$df[1,] <- df[1,]
+    rvColor$df[2,] <- df[2,]
+    dataCol_df <- ncol(rvColor$df)
+    dataColRng <- 1:dataCol_df
+    argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+    rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
 
     
   } else {
@@ -1065,8 +1087,7 @@ observeEvent(input$delete_time, {
 # Ancillary data for Nephrops in and out
 
 output$nepInN <- renderText({
-  input$non_time_table_rows_selected
-  # paste0("Nephrops IN: ", (as.numeric(rvTime$tableAncillary$Nephrops_IN) + input$nepInmore - input$nepInless))
+  paste0("Nephrops IN: ", (as.numeric(rvTime$tableAncillary$Nephrops_IN) + input$nepInmore - input$nepInless))
 })
   
 output$nepOutN <- renderText({
@@ -1133,47 +1154,61 @@ row.show <- reactive({
   
 # Output of the non-countable-time table
   output$non_time_table <- DT::renderDT({
-    DT::datatable(rvTime$tableTime[,c("station","counter_ID","start_non_countable","stop_non_countable","minute")], selection="single",
-                  options = list(dom = 'rtip', pageLength = 10, displayStart = row.show_time())) %>%
-      formatStyle(0:6, color="white", backgroundColor = "grey")
-  })
-  
-  
-  output$non_seconds_table <- DT::renderDT({
-    
-    # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
-    # df$a
-    # dataCol_df <- ncol(df)
-    # dataColRng <- 1:dataCol_df
-    # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
-    # df[, argColRng] <- df[, dataColRng] < 30
-    # 
-    # DT::datatable(df, selection="single",
-    #               options = list(columnDefs = list(list(visible=FALSE, 
-    #                                                     targets=argColRng)))) %>%
-    #   formatStyle(columns = dataColRng,
-    #               valueColumns = argColRng,
-    #               backgroundColor = styleEqual(c('0', '1'), 
-    #                                            c("green", "red")))
-    
-    DT::datatable(rvSeconds$tableNonsecs[,c("minute", "seconds_off")], selection="single",
-                  options = list(dom = 't',
+    DT::datatable(rvTime$tableTime[,c("station","counter_ID","start_non_countable","stop_non_countable","minute")], selection="single", rownames= F,
+                  options = list(dom = 't', pageLength = 1000, displayStart = row.show_time(),
                                  headerCallback = JS("function(thead, data, start, end, display){",
                                                      "  $(thead).remove();",
                                                      "}"))) %>%
-    formatStyle(columns = 2,
-                target = "row",
-                backgroundColor = JS("value < 31 ? 'green' : value > 30 ? 'red' : 'white'"), color = "grey")
+      formatStyle(1:6, color="black", backgroundColor = "bisque")
+  })
+  
+  
+  rvColor <- reactiveValues(df = setNames(data.frame(matrix(ncol = 20, nrow = 3)), c(1:20)))
+  
+  observeEvent({input$start}, {
+    
+    df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+    rvColor$df <- rvColor$df[1:2,-c(21:40)]
+    rvColor$df[1,] <- df[1,]
+    rvColor$df[2,] <- df[2,]
+    dataCol_df <- ncol(rvColor$df)
+    dataColRng <- 1:dataCol_df
+    argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+    rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
+  })
+    
+
+  # Output of seconds_off table with red color for minutes with more than 30 seconds kicked out.
+  output$non_seconds_table <- DT::renderDT({
+ 
+    DT::datatable(rvColor$df, selection="none", rownames= "",
+                  options = list(dom = 't',
+                                 headerCallback = JS("function(thead, data, start, end, display){",
+                                                     "  $(thead).remove();",
+                                                     "}"),
+                                 columnDefs = list(list(visible=FALSE, targets=21:40))
+                                 )) %>%
+      formatStyle(columns = 1:40,
+                  valueColumns = 21:40,
+                  backgroundColor = styleEqual(c('0', '1'),
+                                               c("lightgreen", "tomato"), default="bisque"),
+                  color="black")
+    
+    # DT::datatable(rvSeconds$tableNonsecs[,c("minute", "seconds_off")], selection = "none",
+    #               options = list(dom = 't', pageLength = 20,
+                                 # headerCallback = JS("function(thead, data, start, end, display){",
+                                 #                     "  $(thead).remove();",
+                                 #                     "}"))) %>%
+    # formatStyle(columns = 2,
+    #             target = "row",
+    #             color = JS("value < 31 ? 'green' : value > 30 ? 'red' : 'white'"), backgroundColor = "white",
+    #             fontSize = '50%')
     
 
   })
   
   
-  # output$non_seconds_table <- renderTable(t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")]),
-  #                                         rownames=T, colnames=F)
-  
 
-  
 } # END OF server
 
 
