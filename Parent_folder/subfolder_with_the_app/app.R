@@ -178,7 +178,7 @@ fluidRow(
          actionGroupButtons(c("startTime","stopTime", "confirmTime"), c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
                             direction="horizontal", size="s")),
   
-  column(2, div(style = 'overflow-x: scroll', DTOutput("non_seconds_table"))),
+  column(2, div(style = 'overflow-y: scroll', DTOutput("non_seconds_table", height="100px"))),
 
   # Output datatable for the user. To check the non-countable time
   # setting of the datatable
@@ -1084,11 +1084,30 @@ row.show <- reactive({
   
   
   output$non_seconds_table <- DT::renderDT({
-    DT::datatable(t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")]), selection="single",
-                  options = list(dom = 'rt', headerCallback = JS("function(thead, data, start, end, display){",
-                                                                 "  $(thead).remove();",
-                                                                 "}"))) %>%
-      formatStyle(0:20, backgroundColor = JS("value < 31 ? 'green' : value > 30 ? 'red' : 'white'"), color = "grey")
+    
+    # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+    # df$a
+    # dataCol_df <- ncol(df)
+    # dataColRng <- 1:dataCol_df
+    # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+    # df[, argColRng] <- df[, dataColRng] < 30
+    # 
+    # DT::datatable(df, selection="single",
+    #               options = list(columnDefs = list(list(visible=FALSE, 
+    #                                                     targets=argColRng)))) %>%
+    #   formatStyle(columns = dataColRng,
+    #               valueColumns = argColRng,
+    #               backgroundColor = styleEqual(c('0', '1'), 
+    #                                            c("green", "red")))
+    
+    DT::datatable(rvSeconds$tableNonsecs[,c("minute", "seconds_off")], selection="single",
+                  options = list(dom = 't',
+                                 headerCallback = JS("function(thead, data, start, end, display){",
+                                                     "  $(thead).remove();",
+                                                     "}"))) %>%
+    formatStyle(columns = 2,
+                target = "row",
+                backgroundColor = JS("value < 31 ? 'green' : value > 30 ? 'red' : 'white'"), color = "grey")
   })
   
   
