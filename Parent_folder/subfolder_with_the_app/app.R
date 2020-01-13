@@ -22,6 +22,7 @@ library(shinyWidgets)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(theme = shinytheme("superhero"),
+                shinyjs::useShinyjs(),
                 
                 
 
@@ -367,6 +368,13 @@ server <- function(input, output, session) {
   }, {
     
     if (input$inCounterID != "select ID" & input$inStationID != "select stn" & input$reviewer != "reviewer n."){ # if both counterID and stationID have valid values
+      
+      # First we disable the selectinputbuttons
+      shinyjs::disable("surveyID")
+      shinyjs::disable("counterID")
+      shinyjs::disable("stationID")
+      shinyjs::disable("reviewer")
+      shinyjs::disable("start")
       
           if(file_test("-f", 
                paste0(as.character(volumes_parent[1]),
