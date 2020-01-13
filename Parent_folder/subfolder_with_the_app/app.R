@@ -33,18 +33,20 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            uiOutput("counterID")), # 2nd select Counter
     column(1,
            uiOutput("stationID")), # 3rd select Station
+    column(1, selectInput("reviewer", "4th: 1st or 2nd?", c("reviewer n.", c("1st reviewer", "2nd reviewer")))),
     column(1, br(),
-           actionButton("start", "4th: Load stn")), # 4th press button to load station
+           actionButton("start", "5th: Load stn")), # 4th press button to load station
     column(2,
-           tags$h6("5th: press an arrow to start"), # 5th press arrow on keyboard to plot images on screen
+           tags$h6("6th: press an arrow to start"), # 5th press arrow on keyboard to plot images on screen
            tags$h6("up=PAUSE ; right=PLAY ; left=REWIND")), # app driving instructions
     column(1,
            tags$h6("stills for this station"),
            verbatimTextOutput("jpgnumber")), # check number of images on the folder/station
-    column(4,
+    tags$style("#jpgnumber{height: 34px}"),
+    column(3,
            tags$h6("Folder selected"),
            verbatimTextOutput("directorypath")), # check folder where the images come from (to check station number is correct)
-    tags$style("#directorypath{font-size: 13px}"),
+    tags$style("#directorypath{font-size: 9px}"),
 
     # License
     column(1, actionButton("lic", "code & license")),
@@ -99,6 +101,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
     
     # Ancillary data inputs and save button
     column(4,
+           conditionalPanel(condition="input.reviewer == '1st reviewer'",
            fluidRow(
              #hr(),
              column(2, uiOutput("vm")),
@@ -106,18 +109,19 @@ ui <- fluidPage(theme = shinytheme("superhero"),
              column(2, uiOutput("pp")),
              column(2, uiOutput("kp")),
              column(2, uiOutput("trawl")),
-             column(2, uiOutput("lt"))),
+             column(2, uiOutput("lt")))),
            
            fluidRow(
+             conditionalPanel(condition="input.reviewer == '1st reviewer'", 
              column(2, uiOutput("lm")),
              column(2, uiOutput("sl")),
-             column(2, uiOutput("fs")),
+             column(2, uiOutput("fs"))),
              column(6, uiOutput("comm"))),
            
            fluidRow(style = "height:35px;",
-             
+                    conditionalPanel(condition="input.reviewer == '1st reviewer'", 
              column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
-             column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm")),
+             column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm"))),
 
              
              #br(),
@@ -177,9 +181,11 @@ fluidRow(
                        }"))),
   
   # Input for non-countable time (i.e. footage with sand clouds)
-  column(2, verbatimTextOutput("textTime"),
-         actionGroupButtons(c("startTime","stopTime", "confirmTime"), c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
-                            direction="horizontal", size="sm")),
+  
+  conditionalPanel(condition="input.reviewer == '1st reviewer'", column(2,verbatimTextOutput("textTime"),
+                          actionGroupButtons(c("startTime","stopTime", "confirmTime"),
+                                             c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
+                                             direction="horizontal", size="sm"))),
   
   column(3, div(style = 'overflow-x: scroll', DTOutput("non_seconds_table"))),
 
@@ -189,9 +195,10 @@ fluidRow(
   #                            color: #ffffff !important;
   #                            }")),
   # datatable
+  conditionalPanel(condition="input.reviewer == '1st reviewer'",
   column(3, div(style = 'overflow-y: scroll; height:150px', DTOutput("non_time_table")),
          # Button to delete rows from datatable
-         actionButton("delete_time", "Delete row", style='padding:4px; font-size:80%'))),
+         actionButton("delete_time", "Delete row", style='padding:4px; font-size:80%')))),
 
 
   
@@ -359,7 +366,7 @@ server <- function(input, output, session) {
     input$start
   }, {
     
-    if (input$inCounterID != "select ID" & input$inStationID != "select stn"){ # if both counterID and stationID have valid values
+    if (input$inCounterID != "select ID" & input$inStationID != "select stn" & input$reviewer != "reviewer n."){ # if both counterID and stationID have valid values
       
           if(file_test("-f", 
                paste0(as.character(volumes_parent[1]),
@@ -435,7 +442,11 @@ server <- function(input, output, session) {
       }
       
     } else {
-      showModal(modalDialog(title ="Please, select your ID and station number before clicking this button"))
+      showModal(modalDialog(title ="Please, select your:",
+                            HTML("ID,<br>
+                            station number and<br>
+                            reviewer number<br>
+                            before loading the station")))
     }
     
   })
@@ -647,20 +658,39 @@ server <- function(input, output, session) {
     }
     
     # seconds_off time
-    if(file_test("-f",
-                 paste0(as.character(volumes_parent[1]),
-                        "/app_outcome/non_countable_time/",
-                        input$inSurveyID,
-                        "_", input$inStationID,
-                        "_", input$inCounterID,
-                        "_seconds_off.csv")) == T) {
-      rvSeconds$tableNonsecs <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/",
-                                          input$inSurveyID,
-                                          "_", input$inStationID,
-                                          "_", input$inCounterID,
-                                          "_seconds_off.csv"),
+    if(length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                  pattern = paste0(input$inSurveyID,
+                  "_", input$inStationID,
+                  "_", ".*.",
+                  "_seconds_off.csv"))) > 1) {
+                    
+                    showModal(modalDialog(title ="Error: Contact SIC.",
+                                          HTML("There are more than one .csv file with non_countable_time data for this station.<br>
+                                          SIC must check the app_outcome/non_countable_time folder and delete the duplicated .csv files that shouldn't be there.")))
+                    
+                  } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                                        pattern = paste0(input$inSurveyID,
+                                        "_", input$inStationID,
+                                        "_", ".*.",
+                                        "_seconds_off.csv"))) == 1) {
+
+                          rvSeconds$tableNonsecs <- read.csv(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                                             pattern = paste0(input$inSurveyID,
+                                             "_", input$inStationID,
+                                             "_", ".*.",
+                                             "_seconds_off.csv")),
                                          colClasses = rep("character", 6))
-    }
+                          
+                  } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                                        pattern = paste0(input$inSurveyID,
+                                        "_", input$inStationID,
+                                        "_", ".*.",
+                                        "_seconds_off.csv"))) == 0) {
+
+                    rvSeconds$tableNonsecs$seconds_off[1] <- "no_seconds_have_been_removed_from_this_station_yet"
+                    
+                  }
+
   })
   
   # ANCILLARY data table
@@ -752,7 +782,14 @@ server <- function(input, output, session) {
 
   observeEvent({input$confirmTime},{
     
-    if (substring(textStartStop$start, 4, 5) != substring(textStartStop$stop, 4, 5)) {
+    # Only if there is no seconds_off.csv file created for this station
+    if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                    pattern = paste0(input$inSurveyID,
+                                     "_", input$inStationID,
+                                     "_", ".*.",
+                                     "_seconds_off.csv"))) == 0 | rvSeconds$tableNonsecs$counter_ID == input$inCounterID) {
+      
+        if (substring(textStartStop$start, 4, 5) != substring(textStartStop$stop, 4, 5)) {
       showModal(modalDialog(title ="Warning:",
                             HTML("Non-countable time section must be in one unique minute<br>
                                  Set 'start' and 'stop' times in the same minute")))
@@ -818,7 +855,15 @@ server <- function(input, output, session) {
       argColRng <- (dataCol_df + 1):(dataCol_df * 2)
       rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
       
+    }  
+      
+    } else {
+      
+      showModal(modalDialog(title ="Warning:",
+                            HTML("You cannot log non-countable data for this station because another user has already logged this data.")))
     }
+    
+
     
   })
   
