@@ -129,7 +129,8 @@ ui <- fluidPage(theme = shinytheme("superhero"),
              
              # save button to write ancillary data to .csv file
              column(2,
-                    actionButton("anciSave", "Save ancillary data to .csv"), offset = 0)),
+                    actionButton("anciSave", "Save ancillary data")),
+             column(3, textOutput("anc.info"), offset=1)),
            
            hr(),
            
@@ -644,6 +645,13 @@ server <- function(input, output, session) {
                                           "_", input$inCounterID,
                                           "_ancillary.csv"),
                                    colClasses = rep("character", n_variables))
+      
+      anc.time$modif <- as.character(file.info(paste0(as.character(volumes_parent[1]),"/app_outcome/ancillary/",
+                                                     input$inSurveyID,
+                                                     "_", input$inStationID,
+                                                     "_", input$inCounterID,
+                                                     "_ancillary.csv"))$mtime)
+      
     } else {
         rvTime$tableAncillary <- data.frame("Nephrops_IN" = 0,
                                             "Nephrops_OUT" = 0)
@@ -767,8 +775,20 @@ server <- function(input, output, session) {
                   row.names = F,
                   sep = ",")
     
+      anc.time$modif <- as.character(file.info(paste0(as.character(volumes_parent[1]),"/app_outcome/ancillary/",
+                                                     input$inSurveyID,
+                                                     "_", input$inStationID,
+                                                     "_", input$inCounterID,
+                                                     "_ancillary.csv"))$mtime)
+
+      
   })
   
+  # Every time the ancillary .csv file is changed, record time to show it for the user
+  anc.time <- reactiveValues(modif = as.character())
+  output$anc.info <- renderText(
+    paste0("Last saved: ", substring(anc.time$modif, 1, 19))
+  )
     
   # NON-COUNTABLE TIME
   textStartStop <- reactiveValues(start = integer(0),
@@ -1142,7 +1162,7 @@ observeEvent(input$delete_time, {
 output$nepInN <- renderText({
   paste0("Nephrops IN: ", (as.numeric(rvTime$tableAncillary$Nephrops_IN) + input$nepInmore - input$nepInless))
 })
-  
+
 output$nepOutN <- renderText({
   paste0("Nephrops OUT: ", (as.numeric(rvTime$tableAncillary$Nephrops_OUT) + input$nepOutmore - input$nepOutless))
 })
