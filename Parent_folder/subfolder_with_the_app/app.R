@@ -51,28 +51,28 @@ ui <- fluidPage(theme = shinytheme("superhero"),
 
     # License
     column(1, actionButton("lic", "code & license")),
-    tags$head(tags$style("#lic{font-size: 12px}")),
-    bsModal("lice", "License", "lic", size = "medium",
+    tags$head(tags$style("#lic{font-size: 12px; text-align:center}")),
+    tags$style("#lice{text-align:justify}"),
+    bsModal("lice", HTML("Image annotation R Shiny app <br>
+    Copyright (C) 2019. Mikel Aristegui*"), "lic", size = "large",
             HTML("
-    Image annotation R Shiny app <br>
-    Copyright (C) 2019. Mikel Aristegui * <br><br>
 
+    Recommended citation:
     <p>Aristegui, M. (2019) Image annotation R Shiny app. Marine Institute. <a href=http://doi.org/c8jt >http://doi.org/c8jt</a></p>
 
-    This program is free software: you can redistribute it and/or modify
+    <hr>
+
+    <p>This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
     by the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version. <br><br>
-
+    (at your option) any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details. <br><br>
-
-    <div>
-    <p>You should have received a copy of the GNU Affero General Public License
+    GNU Affero General Public License for more details.
+    You should have received a copy of the GNU Affero General Public License
       along with this program. If not, see <a href=https://www.gnu.org/licenses/>https://www.gnu.org/licenses/</a>.</p>
-    </div>
+
     <hr>
     <p>Full code and license availabe at <a href=https://github.com/IrishMarineInstitute/nephrops-burrow-counting-app/>GitHub repo</a>.</p>
     * mikel.aristegui@marine.ie")), 
