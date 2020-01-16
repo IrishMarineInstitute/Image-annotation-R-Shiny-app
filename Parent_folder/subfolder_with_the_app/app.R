@@ -792,7 +792,11 @@ server <- function(input, output, session) {
                         "_ancillary.csv")) == T) {
       return(as.numeric(rvAncillary$tableAncillary$Nephrops_IN))
       
-      } else { return(0) } # if there is no data, then 0
+      } else { if (input$reviewer == "1st reviewer"){
+        return(0) # if there is no data, then 0
+        } else if (input$reviewer == "2nd reviewer"){
+          return(-1) # -1 to know that this is the 2nd reviewer
+        }}
     })
   
   orig.nepOut <- eventReactive({input$start}, {
@@ -806,8 +810,11 @@ server <- function(input, output, session) {
                         "_ancillary.csv")) == T) {
       return(as.numeric(rvAncillary$tableAncillary$Nephrops_OUT))
       
-    } else { return(0) } # if there is no data, then 0
-    
+    } else { if (input$reviewer == "1st reviewer"){
+      return(0) # if there is no data, then 0
+    } else if (input$reviewer == "2nd reviewer"){
+      return(-1) # -1 to know that this is the 2nd reviewer
+    }}
   })
   
   # changing any ancillary input will create a .csv file with the ancillary data
