@@ -776,7 +776,7 @@ server <- function(input, output, session) {
                                 input$nepOutmore, input$nepOutless,
                                 input$intrawl,
                                 input$inlt))
-  com.update <- debounce(reactive(paste0(input$incomm)), millis = 10000) # wait 10 seconds to give time to the user to finish writing the comment
+  com.update <- debounce(reactive(paste0(input$incomm)), millis = 5000) # wait 10 seUrtarrila2019#conds to give time to the user to finish writing the comment
   
   anc.update <- reactive(paste0(all.update(), com.update()))
   
@@ -822,7 +822,7 @@ server <- function(input, output, session) {
     
     if (input$start > 0) {
 
-    rvAncillary$tableAncillary$Comments <- as.character(rvAncillary$tableAncillary$Comments)
+    # rvAncillary$tableAncillary$Comments <- as.character(rvAncillary$tableAncillary$Comments)
       
     rvAncillary$tableAncillary[1,] = c(input$inSurveyID,
                                        input$inStationID,
