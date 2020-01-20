@@ -63,29 +63,36 @@ Once the app is running, the user should follow these steps:
 * Select a Survey ID
 * Select a Counter ID
 * Select a Station ID
+* Select reviewer number
 * Press "load" button
 * Check if number of images is correct
 * Press an arrow on the keyboard
-* Images should start displaying on the GUI
+* Images should start displaying in the GUI
 * Footage viewer instructions:
   * Up arrow: Pause
   * Rigth arrow: Play
   * Left arrow: Rewind
-  * Timer on the under the image shows current time along the station (starts on 00:00, and should finish on 10:00 for 10 minute stations)
-  * Speed selector next to the timer to amke the 'video' slower
-  * Non-countable time: use 'start', 'stop', and 'confirm' buttons to log in non-countable time (i.e. sand cloud covering the image) -> app_outcome/non_countable_time
-  * Ancillary data: fill all the radio buttons on the top-right and press 'Save ancillary data to .csv' to do so -> app_outcome/ancillary
+  * Timer under the image shows current time along the station (starts on 00:00, and should finish on 10:00 for 10 minute stations)
+  * Speed selector next to the timer to make the 'video' slower
   * Annotation of footage:
     * Pause the footage and click on the burrow you want to annotate. A blue circle will appear where you clicked, and a new row will be added on the table to the right of the image.
     * To delete annotations: select the row you want to delete on the table. Press 'Delete all burrows in current image' button
     * This table will update live a .csv file called surveyID_stationID_counterID_counts.csv inside app_outcome/counts
+  * Ancillary data: record the ancillary information with the dropdown menus, _Nephrops_ counters and comments box on the top-right section. The ancillary information will be saved automatically in a .csv file inside app_outcome/ancillary
+    * The 2nd reviewr will only see the comments box
+  * Non-countable time: use 'start', 'stop', and 'confirm' buttons to log in non-countable time (i.e. sand cloud covering the image) -> app_outcome/non_countable_time.
+    * Only the 1st reviewer will be able to log non-countable time
+    * Both 1st and 2nd reviewers will see a panel with the non-countable amount of seconds for each minute on a right side panel
+    * Only the 1st reviewer will see all the logs on an extra right side panel. The 1st reviewer can delete logs from this table
+
+
 
 
 
 
 ## Patches and pull requests
 
-Your patches are welcome. Here's the suggested workflow:
+Your patches are welcome. Here is the suggested workflow:
 * Fork the project.
 * Make your feature addition or bug fix.
 * Send a pull request with a description of your work.
