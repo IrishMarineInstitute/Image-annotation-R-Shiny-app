@@ -42,7 +42,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            uiOutput("counterID")), # 2nd select Counter
     column(1,
            uiOutput("stationID")), # 3rd select Station
-    column(1, selectInput("reviewer", "4th: 1st or 2nd?", c("reviewer n.", c("1st reviewer", "2nd reviewer")))),
+    column(1, selectInput("reviewer", "4th: 1st or 2nd?", c("reviewer n.", c("1st reviewer", "2nd reviewer", "only ancillary")))),
     column(1, br(),
            actionButton("start", "5th: Load stn")), # 4th press button to load station
     column(2,
@@ -110,7 +110,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
     
     # Ancillary data inputs and save button
     column(4,
-           conditionalPanel(condition="input.reviewer == '1st reviewer'",
+           conditionalPanel(condition="input.reviewer != '2nd reviewer'",
            fluidRow(
              #hr(),
              column(2, uiOutput("vm")),
@@ -121,14 +121,14 @@ ui <- fluidPage(theme = shinytheme("superhero"),
              column(2, uiOutput("lt")))),
            
            fluidRow(
-             conditionalPanel(condition="input.reviewer == '1st reviewer'", 
+             conditionalPanel(condition="input.reviewer != '2nd reviewer'", 
              column(2, uiOutput("lm")),
              column(2, uiOutput("sl")),
              column(2, uiOutput("fs"))),
              column(6, uiOutput("comm"))),
            
            fluidRow(style = "height:35px;",
-                    conditionalPanel(condition="input.reviewer == '1st reviewer'", 
+                    conditionalPanel(condition="input.reviewer != '2nd reviewer'", 
              column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
              column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm"))),
 
@@ -776,7 +776,7 @@ server <- function(input, output, session) {
                                 input$nepOutmore, input$nepOutless,
                                 input$intrawl,
                                 input$inlt))
-  com.update <- debounce(reactive(paste0(input$incomm)), millis = 10000) # wait 10 seUrtarrila2019#conds to give time to the user to finish writing the comment
+  com.update <- debounce(reactive(paste0(input$incomm)), millis = 10000) # wait 10 seconds to give time to the user to finish writing the comment
   
   anc.update <- reactive(paste0(all.update(), com.update()))
   
@@ -792,7 +792,7 @@ server <- function(input, output, session) {
                         "_ancillary.csv")) == T) {
       return(as.numeric(rvAncillary$tableAncillary$Nephrops_IN))
       
-      } else { if (input$reviewer == "1st reviewer"){
+      } else { if (input$reviewer %in% c("1st reviewer", "only ancillary")){
         return(0) # if there is no data, then 0
         } else if (input$reviewer == "2nd reviewer"){
           return(-1) # -1 to know that this is the 2nd reviewer
@@ -810,7 +810,7 @@ server <- function(input, output, session) {
                         "_ancillary.csv")) == T) {
       return(as.numeric(rvAncillary$tableAncillary$Nephrops_OUT))
       
-    } else { if (input$reviewer == "1st reviewer"){
+    } else { if (input$reviewer %in% c("1st reviewer", "only ancillary")){
       return(0) # if there is no data, then 0
     } else if (input$reviewer == "2nd reviewer"){
       return(-1) # -1 to know that this is the 2nd reviewer
@@ -819,39 +819,39 @@ server <- function(input, output, session) {
   
   # changing any ancillary input will create a .csv file with the ancillary data
   observeEvent({anc.update()}, {
-    
-    if (input$start > 0) {
-
-    # rvAncillary$tableAncillary$Comments <- as.character(rvAncillary$tableAncillary$Comments)
-      
-    rvAncillary$tableAncillary[1,] = c(input$inSurveyID,
-                                       input$inStationID,
-                                       input$inCounterID,
-                                       input$invm, input$infq, input$inpp, input$inkp,
-                                       input$inlm, input$insl, input$infs,
-                                       (orig.nepIn() + input$nepInmore - input$nepInless),
-                                       (orig.nepOut() + input$nepOutmore - input$nepOutless),
-                                       input$intrawl,
-                                       input$inlt,
-                                       input$incomm,
-                                       VidOpID())
-
-    write.table(rvAncillary$tableAncillary,
-                file = paste0(as.character(volumes_parent[1]), "/app_outcome/ancillary/",
-                              input$inSurveyID,
-                              "_",input$inStationID,
-                              "_", input$inCounterID,
-                              "_ancillary.csv"),
-                row.names = F,
-                sep = ",")
-
-    anc.time$modif <- as.character(file.info(paste0(as.character(volumes_parent[1]),"/app_outcome/ancillary/",
-                                                    input$inSurveyID,
-                                                    "_", input$inStationID,
-                                                    "_", input$inCounterID,
-                                                    "_ancillary.csv"))$mtime)
-    }
-  })
+ 
+      if (input$start > 0) {
+  
+      # rvAncillary$tableAncillary$Comments <- as.character(rvAncillary$tableAncillary$Comments)
+        
+      rvAncillary$tableAncillary[1,] = c(input$inSurveyID,
+                                         input$inStationID,
+                                         input$inCounterID,
+                                         input$invm, input$infq, input$inpp, input$inkp,
+                                         input$inlm, input$insl, input$infs,
+                                         (orig.nepIn() + input$nepInmore - input$nepInless),
+                                         (orig.nepOut() + input$nepOutmore - input$nepOutless),
+                                         input$intrawl,
+                                         input$inlt,
+                                         input$incomm,
+                                         VidOpID())
+  
+      write.table(rvAncillary$tableAncillary,
+                  file = paste0(as.character(volumes_parent[1]), "/app_outcome/ancillary/",
+                                input$inSurveyID,
+                                "_",input$inStationID,
+                                "_", input$inCounterID,
+                                "_ancillary.csv"),
+                  row.names = F,
+                  sep = ",")
+  
+      anc.time$modif <- as.character(file.info(paste0(as.character(volumes_parent[1]),"/app_outcome/ancillary/",
+                                                      input$inSurveyID,
+                                                      "_", input$inStationID,
+                                                      "_", input$inCounterID,
+                                                      "_ancillary.csv"))$mtime)
+      }
+    })
   
 
   # clicking on the save button will create a .csv file with the ancillary data
