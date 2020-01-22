@@ -819,8 +819,15 @@ server <- function(input, output, session) {
   
   # changing any ancillary input will create a .csv file with the ancillary data
   observeEvent({anc.update()}, {
+
+      if (paste0(input$invm, input$infq, input$inpp, input$inkp,
+                 input$inlm, input$insl, input$infs,
+                 input$nepInmore, input$nepInless,
+                 input$nepOutmore, input$nepOutless,
+                 input$intrawl,
+                 input$inlt) != "nonononononono0000nono") { # to avoid saving without inputs from the scientist
  
-      if (input$start > 0) {
+      # if (input$start > 0) {
   
       # rvAncillary$tableAncillary$Comments <- as.character(rvAncillary$tableAncillary$Comments)
         
@@ -851,6 +858,7 @@ server <- function(input, output, session) {
                                                       "_", input$inCounterID,
                                                       "_ancillary.csv"))$mtime)
       }
+    # }
     })
   
 
