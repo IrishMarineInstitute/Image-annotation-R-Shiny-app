@@ -150,7 +150,9 @@ ui <- fluidPage(theme = shinytheme("superhero"),
             # datatable
            DTOutput("coordinates"),
             # Button to delete rows from datatable
-           actionButton("delete", "Delete all burrows in current image"))),
+           column(5, actionButton("delete", "Delete all burrows in current image")),
+            # Button to save counts into database
+           column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1))),
   
   
   # MIDDLE 2nd ROW: Reset button, non-countable time input, current time info, speed selector
@@ -824,6 +826,7 @@ server <- function(input, output, session) {
                  input$inlm, input$insl, input$infs,
                  input$nepInmore, input$nepInless,
                  input$nepOutmore, input$nepOutless,
+                 input$incomm,
                  input$intrawl,
                  input$inlt) != "nonononononono0000nono") { # to avoid saving without inputs from the scientist
  
