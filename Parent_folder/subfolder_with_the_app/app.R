@@ -232,8 +232,8 @@ fluidRow(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
 
-  volumes <- c(Home = "H:/GitHub/nephrops-burrow-counting-app/Parent_folder/reduced_stn", getVolumes()())
-  volumes_parent <- c(Home = "H:/GitHub/nephrops-burrow-counting-app/Parent_folder/", getVolumes()())
+  volumes <- c(Home = "C:/GitHub/Image-annotation-R-Shiny-app/Parent_folder/reduced_stn", getVolumes()())
+  volumes_parent <- c(Home = "C:/GitHub/Image-annotation-R-Shiny-app/Parent_folder/", getVolumes()())
   
   
   
