@@ -583,16 +583,17 @@ server <- function(input, output, session) {
   # Creating the three output tables
   
   ## Table for annotations of burrows
-  rv <- reactiveValues(tablebase = setNames(data.frame(matrix(ncol = 11, nrow = 0)), c("survey",
-                                                                                       "station",
-                                                                                       "counter_ID",
-                                                                                       "time",
-                                                                                       "still_n",
-                                                                                       "feature",
-                                                                                       "x","y",
-                                                                                       "annotation_time",
-                                                                                       "VideoOperatorID",
-                                                                                       "minute")))
+  n_tablebase <- 11
+  rv <- reactiveValues(tablebase = setNames(data.frame(matrix(ncol = n_tablebase, nrow = 0)), c("survey",
+                                                                                                "station",
+                                                                                                "counter_ID",
+                                                                                                "time",
+                                                                                                "still_n",
+                                                                                                "feature",
+                                                                                                "x","y",
+                                                                                                "annotation_time",
+                                                                                                "VideoOperatorID",
+                                                                                                "minute")))
   ## Table for non-countable time  
   rvTime <- reactiveValues(tableTime = setNames(data.frame(matrix(ncol = 9, nrow = 0)), c("survey",
                                                                                           "station",
@@ -639,7 +640,7 @@ server <- function(input, output, session) {
                                       input$inSurveyID,"_",input$inStationID,
                                       "_", input$inCounterID,
                                       "_counts.csv"),
-                               colClasses = rep("character", 11))
+                               colClasses = rep("character", n_tablebase))
     }
     # ancillary
     if(file_test("-f",
@@ -1177,16 +1178,16 @@ observeEvent(input$confirmYes, {
   
   jpgsFiles$jpgsNames <- jpgsFiles$originalNames
   
-  rv$tablebase <- setNames(data.frame(matrix(ncol = 11, nrow = 0)), c("survey",
-                                                                      "station",
-                                                                      "counter_ID",
-                                                                      "time",
-                                                                      "still_n",
-                                                                      "feature",
-                                                                      "x", "y",
-                                                                      "annotation_time",
-                                                                      "VideoOperatorID",
-                                                                      "minute"))
+  rv$tablebase <- setNames(data.frame(matrix(ncol = n_tablebase, nrow = 0)), c("survey",
+                                                                               "station",
+                                                                               "counter_ID",
+                                                                               "time",
+                                                                               "still_n",
+                                                                               "feature",
+                                                                               "x", "y",
+                                                                               "annotation_time",
+                                                                               "VideoOperatorID",
+                                                                               "minute"))
   
   # Remove the .txt and the .csv for this counter
   
