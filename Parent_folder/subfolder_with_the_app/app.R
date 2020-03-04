@@ -123,7 +123,12 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            fluidRow(
              conditionalPanel(condition="input.reviewer != '2nd reviewer'", 
              column(2, uiOutput("lm")),
-             column(2, uiOutput("sl")),
+             # Marine Institute version
+             conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') == -1",
+                              column(2, uiOutput("sql"))),
+             # Ifremer version. Special request for counting Squat lobsters
+             conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') !== -1",
+                              column(2, uiOutput("sqlC"), actionGroupButtons(c("sqlCless","sqlCmore"), c("-","+"), direction="horizontal", size="sm"))),
              column(2, uiOutput("fs"))),
              column(6, uiOutput("comm"))),
            
@@ -747,8 +752,8 @@ server <- function(input, output, session) {
   output$lm <- renderUI({
     selectInput("inlm", "LMC", choices = list("no","yes"), selected=rvAncillary$tableAncillary$LMC)
   })
-  output$sl <- renderUI({
-    selectInput("insl", "Squat", choices = list("no","yes"), selected=rvAncillary$tableAncillary$squat_lobster)
+  output$sql <- renderUI({
+    selectInput("insql", "Squat", choices = list("no","yes"), selected=rvAncillary$tableAncillary$squat_lobster)
   })
   output$fs <- renderUI({
     selectInput("infs", "Fish", choices = list("no","yes"), selected=rvAncillary$tableAncillary$fish)
@@ -774,7 +779,7 @@ server <- function(input, output, session) {
   
   # reactive object that updates everytime any ancillary input is changed by the user
   all.update <- reactive(paste0(input$invm, input$infq, input$inpp, input$inkp,
-                                input$inlm, input$insl, input$infs,
+                                input$inlm, input$insql, input$infs,
                                 input$nepInmore, input$nepInless,
                                 input$nepOutmore, input$nepOutless,
                                 input$intrawl,
@@ -824,7 +829,7 @@ server <- function(input, output, session) {
   observeEvent({anc.update()}, {
 
       if (paste0(input$invm, input$infq, input$inpp, input$inkp,
-                 input$inlm, input$insl, input$infs,
+                 input$inlm, input$insql, input$infs,
                  input$nepInmore, input$nepInless,
                  input$nepOutmore, input$nepOutless,
                  input$incomm,
@@ -839,7 +844,7 @@ server <- function(input, output, session) {
                                          input$inStationID,
                                          input$inCounterID,
                                          input$invm, input$infq, input$inpp, input$inkp,
-                                         input$inlm, input$insl, input$infs,
+                                         input$inlm, input$insql, input$infs,
                                          (orig.nepIn() + input$nepInmore - input$nepInless),
                                          (orig.nepOut() + input$nepOutmore - input$nepOutless),
                                          input$intrawl,
@@ -873,7 +878,7 @@ server <- function(input, output, session) {
                                          input$inStationID,
                                          input$inCounterID,
                                          input$invm, input$infq, input$inpp, input$inkp,
-                                         input$inlm, input$insl, input$infs,
+                                         input$inlm, input$insql, input$infs,
                                          (orig.nepIn() + input$nepInmore - input$nepInless),
                                          (orig.nepOut() + input$nepOutmore - input$nepOutless),
                                          input$intrawl,
