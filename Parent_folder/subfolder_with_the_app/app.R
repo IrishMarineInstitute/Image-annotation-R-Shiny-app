@@ -125,10 +125,14 @@ ui <- fluidPage(theme = shinytheme("superhero"),
              column(2, uiOutput("lm")),
              # Marine Institute version
              conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') == -1",
-                              column(2, uiOutput("sql"))),
+                              column(2, uiOutput("sql"))
+             )
+             ,
              # Ifremer version. Special request for counting Squat lobsters
              conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') !== -1",
-                              column(2, uiOutput("sqlC"), actionGroupButtons(c("sqlCless","sqlCmore"), c("-","+"), direction="horizontal", size="sm"))),
+                              column(2, uiOutput("sqlCN"), actionGroupButtons(c("sqlCless","sqlCmore"), c("-","+"), direction="horizontal", size="sm"))
+             )
+             ,
              column(2, uiOutput("fs"))),
              column(6, uiOutput("comm"))),
            
@@ -331,7 +335,7 @@ server <- function(input, output, session) {
 
     # Reading the Video operator ID from SURVEYS_and_COUNTERS.csv
   VidOpID <- reactive({
-    surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID
+    unique(surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID) # unique() needed in case the same counter is in more than one survey 
   })
  
 
@@ -342,7 +346,16 @@ server <- function(input, output, session) {
     })
   
   output$directorypath <- renderPrint({
-    stationDir()
+    # stationDir()
+    paste0(input$invm, input$infq, input$inpp, input$inkp,
+           input$inlm,
+           input$insql, input$sqlCmore, input$sqlCless,
+           input$infs,
+           input$nepInmore, input$nepInless,
+           input$nepOutmore, input$nepOutless,
+           input$incomm,
+           input$intrawl,
+           input$inlt)
   })
   
     # Folder with images for the station
@@ -755,6 +768,10 @@ server <- function(input, output, session) {
   output$sql <- renderUI({
     selectInput("insql", "Squat", choices = list("no","yes"), selected=rvAncillary$tableAncillary$squat_lobster)
   })
+  # output$sqlCN <- renderUI({
+  #   textOutput(rvAncillary$tableAncillary$squat_lobster)
+  # })
+  
   output$fs <- renderUI({
     selectInput("infs", "Fish", choices = list("no","yes"), selected=rvAncillary$tableAncillary$fish)
   })
@@ -762,12 +779,12 @@ server <- function(input, output, session) {
     textAreaInput("incomm", "Comments", value=rvAncillary$tableAncillary$Comments, height = "35px", placeholder="Add comments here")
   })
   
-  output$nepInN <- renderUI({
-    textOutput(rvAncillary$tableAncillary$Nephrops_IN)
-  })
-  output$nepOutN <- renderUI({
-    textOutput(rvAncillary$tableAncillary$Nephrops_OUT)
-  })
+  # output$nepInN <- renderUI({
+  #   textOutput(rvAncillary$tableAncillary$Nephrops_IN)
+  # })
+  # output$nepOutN <- renderUI({
+  #   textOutput(rvAncillary$tableAncillary$Nephrops_OUT)
+  # })
   
   output$trawl <- renderUI({
     selectInput("intrawl", "Trawl marks", choices = list("no","yes"), selected=rvAncillary$tableAncillary$trawl_marks)
@@ -779,7 +796,9 @@ server <- function(input, output, session) {
   
   # reactive object that updates everytime any ancillary input is changed by the user
   all.update <- reactive(paste0(input$invm, input$infq, input$inpp, input$inkp,
-                                input$inlm, input$insql, input$infs,
+                                input$inlm,
+                                input$insql, input$sqlCmore, input$sqlCless,
+                                input$infs,
                                 input$nepInmore, input$nepInless,
                                 input$nepOutmore, input$nepOutless,
                                 input$intrawl,
@@ -825,16 +844,55 @@ server <- function(input, output, session) {
     }}
   })
   
+  # For Ifremer version
+  orig.sqlC <- eventReactive({input$start}, {
+    
+    if(grepl("IFREMER", input$inSurveyID)) {
+      
+          if(file_test("-f",
+                 paste0(as.character(volumes_parent[1]),
+                        "/app_outcome/ancillary/",
+                        input$inSurveyID,
+                        "_", input$inStationID,
+                        "_", input$inCounterID,
+                        "_ancillary.csv")) == T) {
+      return(as.numeric(rvAncillary$tableAncillary$squat_lobster))
+      
+    } else { if (input$reviewer %in% c("1st reviewer", "only ancillary")){
+      return(0) # if there is no data, then 0
+    } else if (input$reviewer == "2nd reviewer"){
+      return(-1) # -1 to know that this is the 2nd reviewer
+      
+    }}
+      
+      }
+    
+  })
+  
+  # Edit for Ifremer version.
+  sqlCfinal <- reactive({
+    if (is.null(input$inSurveyID)) {
+      sqlCfin <- input$insql
+      } else if (grepl("IFREMER", input$inSurveyID) == F) { # MI version. Squat presence/absence
+        sqlCfin <- input$insql
+        } else if (grepl("IFREMER", input$inSurveyID) == T) { # IFREMER version. Squat number
+          sqlCfin <- (orig.sqlC() + input$sqlCmore - input$sqlCless)
+          }
+    return(sqlCfin)
+  })
+  
   # changing any ancillary input will create a .csv file with the ancillary data
   observeEvent({anc.update()}, {
 
       if (paste0(input$invm, input$infq, input$inpp, input$inkp,
-                 input$inlm, input$insql, input$infs,
+                 input$inlm,
+                 input$insql, input$sqlCmore, input$sqlCless,
+                 input$infs,
                  input$nepInmore, input$nepInless,
                  input$nepOutmore, input$nepOutless,
                  input$incomm,
                  input$intrawl,
-                 input$inlt) != "nonononononono0000nono") { # to avoid saving without inputs from the scientist
+                 input$inlt) != "nononononono00no0000nono") { # to avoid saving without inputs from the scientist
  
       # if (input$start > 0) {
   
@@ -844,7 +902,9 @@ server <- function(input, output, session) {
                                          input$inStationID,
                                          input$inCounterID,
                                          input$invm, input$infq, input$inpp, input$inkp,
-                                         input$inlm, input$insql, input$infs,
+                                         input$inlm,
+                                         sqlCfinal(),
+                                         input$infs,
                                          (orig.nepIn() + input$nepInmore - input$nepInless),
                                          (orig.nepOut() + input$nepOutmore - input$nepOutless),
                                          input$intrawl,
@@ -871,6 +931,9 @@ server <- function(input, output, session) {
     })
   
 
+
+  
+  
   # clicking on the save button will create a .csv file with the ancillary data
   observeEvent({input$anciSave},{
     
@@ -878,7 +941,9 @@ server <- function(input, output, session) {
                                          input$inStationID,
                                          input$inCounterID,
                                          input$invm, input$infq, input$inpp, input$inkp,
-                                         input$inlm, input$insql, input$infs,
+                                         input$inlm,
+                                         sqlCfinal(),
+                                         input$infs,
                                          (orig.nepIn() + input$nepInmore - input$nepInless),
                                          (orig.nepOut() + input$nepOutmore - input$nepOutless),
                                          input$intrawl,
@@ -1286,6 +1351,11 @@ output$nepInN <- renderText({
 output$nepOutN <- renderText({
   paste0("Nephrops OUT: ", (orig.nepOut() + input$nepOutmore - input$nepOutless))
 })
+
+output$sqlCN <- renderText({
+  paste0("Squat lobsters: ", (orig.sqlC() + input$sqlCmore - input$sqlCless))
+})
+
 
 
 
