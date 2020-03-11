@@ -346,16 +346,7 @@ server <- function(input, output, session) {
     })
   
   output$directorypath <- renderPrint({
-    # stationDir()
-    paste0(input$invm, input$infq, input$inpp, input$inkp,
-           input$inlm,
-           input$insql, input$sqlCmore, input$sqlCless,
-           input$infs,
-           input$nepInmore, input$nepInless,
-           input$nepOutmore, input$nepOutless,
-           input$incomm,
-           input$intrawl,
-           input$inlt)
+    stationDir()
   })
   
     # Folder with images for the station
