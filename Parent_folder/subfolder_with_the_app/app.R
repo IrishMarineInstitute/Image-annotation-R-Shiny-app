@@ -4,6 +4,7 @@
 library(colorspace)
 library(DT)
 library(exifr)
+library(gtools)
 library(hms)
 library(jpeg)
 library(magick)
@@ -25,12 +26,12 @@ library(shinyWidgets)
 ui <- fluidPage(theme = shinytheme("superhero"),
                 shinyjs::useShinyjs(),
                 # tags$head(tags$script(jss)),
-                tags$head(tags$script(HTML("
-    // Enable navigation prompt
-    window.onbeforeunload = function() {
-        return 'Are you sure you want to leave?';
-    };
-    "))),
+    #             tags$head(tags$script(HTML("
+    # // Enable navigation prompt
+    # window.onbeforeunload = function() {
+    #     return 'Are you sure you want to leave?';
+    # };
+    # "))),
                 
                 
 
@@ -277,7 +278,7 @@ server <- function(input, output, session) {
   output$counterID <- renderUI({
     selectInput("inCounterID", "2nd: select your ID",
                 c("select ID",
-                  counters[[surv()]])
+                  counters[[surv()]], "SIC_matching")
     )
   })
   
@@ -1460,6 +1461,62 @@ row.show <- reactive({
     
 
   })
+  
+  
+  # Matching option
+  
+  observeEvent({input$inCounterID},{
+    
+    if(input$inCounterID == "SIC_matching"){
+      
+      # paste0(volumes_parent[1], "/app_outcome/counts/
+      
+    
+      output$match_pairs <- renderDataTable({
+        
+        pre.pairs <- grep(list.files(path="C:/GitHub/Image-annotation-R-Shiny-app/Parent_folder/app_outcome/counts", patter = "counts.csv"),
+                          pattern = "SURVEYS_and_COUNTERS|Box|ERROR", inv=T, value=T)
+        pairs.stn <- sub(".*_(.*?) *_.*", "\\1", sub(".*CV19017_ *(.*?) *_counts.*", "\\1", pre.pairs))
+        pairs <- as.data.frame(cbind(as.character(pre.pairs), pairs.stn))
+        pairs2 <- as.data.frame(aggregate(pre.pairs ~ pairs.stn , data = pairs, FUN = cbind))
+        pairs3 <- NULL
+        for (i in 1:nrow(pairs2)){
+          cur.pair <- combinations(n = length(pairs2$pre.pairs[[i]]), r = 2, v = pairs2$pre.pairs[[i]], repeats.allowed = F)
+          pairs3 <- rbind(pairs3, cur.pair)
+        }
+        DT::datatable(pairs3, colnames=c("counter1", "counter2"),
+                      selection = list(mode = 'single'))
+        
+        # r = rv$selectedRow
+        # print(paste("selectedRow on 'renderDT':", r))
+        # datatable(
+        #   datasets, 
+        #   options = list(
+        #     displayStart = as.numeric(r)-1,
+        #     pageLength = 2
+        #   ),
+        #   filter = 'top',
+        #   selection = list(mode = 'single', selected = r), 
+        #   rownames = F
+        # )
+      })
+      
+    
+
+      
+
+      
+      showModal(modalDialog(title ="YE",
+                            HTML("Select the pair you want to check"),
+                            br(),
+                            br(),
+                            DT::dataTableOutput('match_pairs'),
+                            footer = tagList(
+                              modalButton('Cancel'), 
+                              bsButton('select', 'Select')
+                            )))
+    }})
+  
   
   
 
