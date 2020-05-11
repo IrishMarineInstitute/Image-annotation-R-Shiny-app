@@ -6,7 +6,7 @@ This R Shiny application was built to annotate footage (HD-stills) from _Nephrop
 ## Dependencies
 
 The app was built using R (Version 3.5.2), RStudio (Version 1.1.463) and the following R libraries:  
-"colorspace", "DT", "exifr", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets"  
+"colorspace", "DT", "exifr", "gtools", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets"  
 
 Two additional software were used to ensure correct extraction of exif information from the images:
 
