@@ -43,7 +43,8 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            uiOutput("counterID")), # 2nd select Counter
     column(1,
            uiOutput("stationID")), # 3rd select Station
-    column(1, selectInput("reviewer", "4th: 1st or 2nd?", c("reviewer n.", c("1st reviewer", "2nd reviewer", "only ancillary")))),
+    column(1,
+           uiOutput("reviewer")), # 4th select Reviewer number
     column(1, br(),
            actionButton("start", "5th: Load stn")), # 4th press button to load station
     column(2,
@@ -328,11 +329,28 @@ server <- function(input, output, session) {
   
   
   output$stationID <- renderUI({
-    selectInput("inStationID", "3rd: select station",
-                c("select stn",
-                  stations[[surv()]][[input$inCounterID]])
-    )
+    if (input$inCounterID != "SIC_matching") {
+      selectInput("inStationID", "3rd: select station",
+                  c("select stn",
+                    stations[[surv()]][[input$inCounterID]])
+      )
+    } else {
+      
+      selectInput("inStationID", "3rd: select station",
+                  as.character(rv$pairs$stn[rv$selectedRowPair],
+                               selected = as.character(rv$pairs$stn[rv$selectedRowPair]))
+      )
+      }
+    })
+  
+  output$reviewer <- renderUI({
+    if (input$inCounterID != "SIC_matching") {
+      selectInput("inreviewer", "4th: 1st or 2nd?", c("reviewer n.", c("1st reviewer", "2nd reviewer", "only ancillary")))
+    } else {
+      selectInput("inreviewer", "4th: 1st or 2nd?", c("SIC_matching"))
+    }
   })
+
 
     # Reading the Video operator ID from SURVEYS_and_COUNTERS.csv
   VidOpID <- reactive({
@@ -1476,35 +1494,21 @@ row.show <- reactive({
         
         pre.pairs <- grep(list.files(path="C:/GitHub/Image-annotation-R-Shiny-app/Parent_folder/app_outcome/counts", patter = "counts.csv"),
                           pattern = "SURVEYS_and_COUNTERS|Box|ERROR", inv=T, value=T)
-        pairs.stn <- sub(".*_(.*?) *_.*", "\\1", sub(".*CV19017_ *(.*?) *_counts.*", "\\1", pre.pairs))
-        pairs <- as.data.frame(cbind(as.character(pre.pairs), pairs.stn))
+        pairs.stn <- sub("*_(.*?) *_.*", "_\\1", sub(".*CV19017_ *(.*?) *_counts.*", "\\1", pre.pairs))
+        pairs <- as.data.frame(cbind(as.character(pre.pairs), as.character(pairs.stn)))
         pairs2 <- as.data.frame(aggregate(pre.pairs ~ pairs.stn , data = pairs, FUN = cbind))
         pairs3 <- NULL
         for (i in 1:nrow(pairs2)){
-          cur.pair <- combinations(n = length(pairs2$pre.pairs[[i]]), r = 2, v = pairs2$pre.pairs[[i]], repeats.allowed = F)
+          cur.pair <- cbind(pairs2$pairs.stn[i], combinations(n = length(pairs2$pre.pairs[[i]]), r = 2, v = pairs2$pre.pairs[[i]], repeats.allowed = F))
           pairs3 <- rbind(pairs3, cur.pair)
         }
-        DT::datatable(pairs3, colnames=c("counter1", "counter2"),
-                      selection = list(mode = 'single'))
-        
-        # r = rv$selectedRow
-        # print(paste("selectedRow on 'renderDT':", r))
-        # datatable(
-        #   datasets, 
-        #   options = list(
-        #     displayStart = as.numeric(r)-1,
-        #     pageLength = 2
-        #   ),
-        #   filter = 'top',
-        #   selection = list(mode = 'single', selected = r), 
-        #   rownames = F
-        # )
+        pairs3 <- as.data.frame(pairs3)
+        names(pairs3) <- c("stn", "counter1", "counter2")
+        rv$pairs <- pairs3
+        DT::datatable(pairs3, colnames = c("stn", "counter1", "counter2"),
+                                  selection = list(mode = 'single'))
       })
       
-    
-
-      
-
       
       showModal(modalDialog(title ="YE",
                             HTML("Select the pair you want to check"),
@@ -1513,11 +1517,22 @@ row.show <- reactive({
                             DT::dataTableOutput('match_pairs'),
                             footer = tagList(
                               modalButton('Cancel'), 
-                              bsButton('select', 'Select')
+                              bsButton('pair.select', 'Select')
                             )))
     }})
   
-  
+  # Saving the selected row and updating the selectInput
+  observeEvent(input$pair.select, {
+    
+    rv$selectedRowPair = req(input$match_pairs_rows_selected)
+    
+    # Disable the selectinputbuttons
+    shinyjs::disable("surveyID")
+    shinyjs::disable("counterID")
+    shinyjs::disable("reviewer")
+    
+    removeModal(session)
+  })
   
 
 } # END OF server
