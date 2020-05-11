@@ -112,7 +112,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
     
     # Ancillary data inputs and save button
     column(4,
-           conditionalPanel(condition="input.reviewer != '2nd reviewer'",
+           conditionalPanel(condition="input.inreviewer.indexOf('2nd reviewer') == -1",
            fluidRow(
              #hr(),
              column(2, uiOutput("vm")),
@@ -123,7 +123,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
              column(2, uiOutput("lt")))),
            
            fluidRow(
-             conditionalPanel(condition="input.reviewer != '2nd reviewer'", 
+             conditionalPanel(condition="input.inreviewer.indexOf('2nd reviewer') == -1", 
              column(2, uiOutput("lm")),
              # Marine Institute version
              conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') == -1",
@@ -139,7 +139,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
              column(6, uiOutput("comm"))),
            
            fluidRow(style = "height:35px;",
-                    conditionalPanel(condition="input.reviewer != '2nd reviewer'", 
+                    conditionalPanel(condition="input.inreviewer.indexOf('2nd reviewer') == -1", 
              column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
              column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm"))),
 
@@ -205,7 +205,7 @@ fluidRow(
   
   # Input for non-countable time (i.e. footage with sand clouds)
   
-  conditionalPanel(condition="input.reviewer == '1st reviewer'", column(2,verbatimTextOutput("textTime"),
+  conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1", column(2,verbatimTextOutput("textTime"),
                           actionGroupButtons(c("startTime","stopTime", "confirmTime"),
                                              c("start", "stop", "confirm"), # "confirm" button saves "start" and "stop" times into a .csv file
                                              direction="horizontal", size="sm"))),
@@ -218,7 +218,7 @@ fluidRow(
   #                            color: #ffffff !important;
   #                            }")),
   # datatable
-  conditionalPanel(condition="input.reviewer == '1st reviewer'",
+  conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1",
   column(3, div(style = 'overflow-y: scroll; height:150px', DTOutput("non_time_table")),
          # Button to delete rows from datatable
          actionButton("delete_time", "Delete row", style='padding:4px; font-size:80%')))),
@@ -406,7 +406,7 @@ server <- function(input, output, session) {
     input$start
   }, {
     
-    if (input$inCounterID != "select ID" & input$inStationID != "select stn" & input$reviewer != "reviewer n."){ # if both counterID and stationID have valid values
+    if (input$inCounterID != "select ID" & input$inStationID != "select stn" & input$inreviewer != "reviewer n."){ # if all counterID, stationID and reviewer have valid values
       
       # First we disable the selectinputbuttons
       shinyjs::disable("surveyID")
@@ -829,9 +829,9 @@ server <- function(input, output, session) {
                         "_ancillary.csv")) == T) {
       return(as.numeric(rvAncillary$tableAncillary$Nephrops_IN))
       
-      } else { if (input$reviewer %in% c("1st reviewer", "only ancillary")){
+      } else { if (input$inreviewer %in% c("1st reviewer", "only ancillary")){
         return(0) # if there is no data, then 0
-        } else if (input$reviewer == "2nd reviewer"){
+        } else if (input$inreviewer == "2nd reviewer"){
           return(-1) # -1 to know that this is the 2nd reviewer
         }}
     })
@@ -847,9 +847,9 @@ server <- function(input, output, session) {
                         "_ancillary.csv")) == T) {
       return(as.numeric(rvAncillary$tableAncillary$Nephrops_OUT))
       
-    } else { if (input$reviewer %in% c("1st reviewer", "only ancillary")){
+    } else { if (input$inreviewer %in% c("1st reviewer", "only ancillary")){
       return(0) # if there is no data, then 0
-    } else if (input$reviewer == "2nd reviewer"){
+    } else if (input$inreviewer == "2nd reviewer"){
       return(-1) # -1 to know that this is the 2nd reviewer
     }}
   })
@@ -868,9 +868,9 @@ server <- function(input, output, session) {
                         "_ancillary.csv")) == T) {
       return(as.numeric(rvAncillary$tableAncillary$squat_lobster))
       
-    } else { if (input$reviewer %in% c("1st reviewer", "only ancillary")){
+    } else { if (input$inreviewer %in% c("1st reviewer", "only ancillary")){
       return(0) # if there is no data, then 0
-    } else if (input$reviewer == "2nd reviewer"){
+    } else if (input$inreviewer == "2nd reviewer"){
       return(-1) # -1 to know that this is the 2nd reviewer
       
     }}
@@ -1491,8 +1491,7 @@ row.show <- reactive({
       
     
       output$match_pairs <- renderDataTable({
-        
-        pre.pairs <- grep(list.files(path="C:/GitHub/Image-annotation-R-Shiny-app/Parent_folder/app_outcome/counts", patter = "counts.csv"),
+        pre.pairs <- grep(list.files(path = paste0(volumes_parent[1], "/app_outcome/counts"), pattern = "counts.csv"),
                           pattern = "SURVEYS_and_COUNTERS|Box|ERROR", inv=T, value=T)
         pairs.stn <- sub("*_(.*?) *_.*", "_\\1", sub(".*CV19017_ *(.*?) *_counts.*", "\\1", pre.pairs))
         pairs <- as.data.frame(cbind(as.character(pre.pairs), as.character(pairs.stn)))
@@ -1517,21 +1516,29 @@ row.show <- reactive({
                             DT::dataTableOutput('match_pairs'),
                             footer = tagList(
                               modalButton('Cancel'), 
-                              bsButton('pair.select', 'Select')
+                              bsButton('pair.select', 'Select'),
+                              bsButton('pair.run', 'Run comparison')
                             )))
     }})
   
   # Saving the selected row and updating the selectInput
   observeEvent(input$pair.select, {
-    
     rv$selectedRowPair = req(input$match_pairs_rows_selected)
-    
     # Disable the selectinputbuttons
     shinyjs::disable("surveyID")
     shinyjs::disable("counterID")
     shinyjs::disable("reviewer")
-    
-    removeModal(session)
+  })
+  observeEvent(input$pair.run, {
+    row.match <<- rv$selectedRowPair
+    counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
+    matching.folder <<- paste0(volumes_parent[1], "/matching")
+    source(paste0(volumes_parent[1], "/matching/matching_annotations.R"))
+    rv$selectedRowPair = req(input$match_pairs_rows_selected)
+    # Disable the selectinputbuttons
+    shinyjs::disable("surveyID")
+    shinyjs::disable("counterID")
+    shinyjs::disable("reviewer")
   })
   
 
