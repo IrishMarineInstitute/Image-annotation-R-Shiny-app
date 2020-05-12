@@ -110,60 +110,69 @@ ui <- fluidPage(theme = shinytheme("superhero"),
                        height=700
                        )),
     
-    # Ancillary data inputs and save button
-    column(4,
-           conditionalPanel(condition="input.inreviewer.indexOf('2nd reviewer') == -1",
-           fluidRow(
-             #hr(),
-             column(2, uiOutput("vm")),
-             column(2, uiOutput("fq")),
-             column(2, uiOutput("pp")),
-             column(2, uiOutput("kp")),
-             column(2, uiOutput("trawl")),
-             column(2, uiOutput("lt")))),
-           
-           fluidRow(
-             conditionalPanel(condition="input.inreviewer.indexOf('2nd reviewer') == -1", 
-             column(2, uiOutput("lm")),
-             # Marine Institute version
-             conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') == -1",
-                              column(2, uiOutput("sql"))
-             )
-             ,
-             # Ifremer version. Special request for counting Squat lobsters
-             conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') !== -1",
-                              column(2, uiOutput("sqlCN"), actionGroupButtons(c("sqlCless","sqlCmore"), c("-","+"), direction="horizontal", size="sm"))
-             )
-             ,
-             column(2, uiOutput("fs"))),
-             column(6, uiOutput("comm"))),
-           
-           fluidRow(style = "height:35px;",
-                    conditionalPanel(condition="input.inreviewer.indexOf('2nd reviewer') == -1", 
-             column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
-             column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm"))),
-
+    # If not using SIC-matching method:
+    conditionalPanel(condition="input.inreviewer.indexOf('SIC_matching') == -1",
+      # Ancillary data inputs and save button
+      column(4,
+             conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1 ||
+                              input.inreviewer.indexOf('only ancillary') !== -1",
+             fluidRow(
+               #hr(),
+               column(2, uiOutput("vm")),
+               column(2, uiOutput("fq")),
+               column(2, uiOutput("pp")),
+               column(2, uiOutput("kp")),
+               column(2, uiOutput("trawl")),
+               column(2, uiOutput("lt")))),
              
-             #br(),
+             fluidRow(
+               conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1 ||
+                                input.inreviewer.indexOf('only ancillary') !== -1", 
+               column(2, uiOutput("lm")),
+               # Marine Institute version
+               conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') == -1",
+                                column(2, uiOutput("sql"))
+               )
+               ,
+               # Ifremer version. Special request for counting Squat lobsters
+               conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') !== -1",
+                                column(2, uiOutput("sqlCN"), actionGroupButtons(c("sqlCless","sqlCmore"), c("-","+"), direction="horizontal", size="sm"))
+               )
+               ,
+               column(2, uiOutput("fs"))),
+               column(6, uiOutput("comm"))),
              
-             # save button to write ancillary data to .csv file
-             column(2,
-                    actionButton("anciSave", "Save ancillary")),
-             column(3, textOutput("anc.info"), offset=1)),
-           
-           hr(),
-           
-           # Output datatable for the user. To check the burrow systems annotated
-            # setting of the datatable
-           tags$style(HTML(".dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing,.dataTables_wrapper .dataTables_paginate .paginate_button, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-                           color: #ffffff !important;
-                           }")),
-            # datatable
-           DTOutput("coordinates"),
-            # Button to delete rows from datatable
-           column(5, actionButton("delete", "Delete all burrows in current image")),
-            # Button to save counts into database
-           column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1))),
+             fluidRow(style = "height:35px;",
+                      conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1 ||
+                                       input.inreviewer.indexOf('only ancillary') !== -1", 
+               column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
+               column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm"))),
+  
+               
+               #br(),
+               
+               # save button to write ancillary data to .csv file
+               column(2,
+                      actionButton("anciSave", "Save ancillary")),
+               column(3, textOutput("anc.info"), offset=1)),
+             
+             hr(),
+             
+             # Output datatable for the user. To check the burrow systems annotated
+              # setting of the datatable
+             tags$style(HTML(".dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing,.dataTables_wrapper .dataTables_paginate .paginate_button, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+                             color: #ffffff !important;
+                             }")),
+              # datatable
+             DTOutput("coordinates"),
+              # Button to delete rows from datatable
+             column(5, actionButton("delete", "Delete all burrows in current image")),
+              # Button to save counts into database
+             column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1))),
+  
+  # If using SIC-matching method:
+  conditionalPanel(condition = "input.inreviewer.indexOf('SIC_matching') !== -1",
+                   column(4, imageOutput("match_plot")))),
   
   
   # MIDDLE 2nd ROW: Reset button, non-countable time input, current time info, speed selector
@@ -277,10 +286,14 @@ server <- function(input, output, session) {
 
 
   output$counterID <- renderUI({
-    selectInput("inCounterID", "2nd: select your ID",
-                c("select ID",
-                  counters[[surv()]], "SIC_matching")
-    )
+    if (input$inSurveyID == "select survey") {
+      selectInput("inCounterID", "2nd: select your ID",
+                  c("input survey"))
+    } else {
+      selectInput("inCounterID", "2nd: select your ID",
+                  c("select ID",
+                    counters[[surv()]], "SIC_matching"))
+    }
   })
   
   
@@ -337,8 +350,8 @@ server <- function(input, output, session) {
     } else {
       
       selectInput("inStationID", "3rd: select station",
-                  as.character(rv$pairs$stn[rv$selectedRowPair],
-                               selected = as.character(rv$pairs$stn[rv$selectedRowPair]))
+                  as.character(rvp$pairs$stn[rvp$selectedRowPair],
+                               selected = as.character(rvp$pairs$stn[rvp$selectedRowPair]))
       )
       }
     })
@@ -406,7 +419,7 @@ server <- function(input, output, session) {
     input$start
   }, {
     
-    if (input$inCounterID != "select ID" & input$inStationID != "select stn" & input$inreviewer != "reviewer n."){ # if all counterID, stationID and reviewer have valid values
+    if (input$inSurveyID != "select survey" &input$inCounterID != "select ID" & input$inStationID != "select stn" & input$inreviewer != "reviewer n."){ # if all surveyID, counterID, stationID and reviewer have valid values
       
       # First we disable the selectinputbuttons
       shinyjs::disable("surveyID")
@@ -490,7 +503,8 @@ server <- function(input, output, session) {
       
     } else {
       showModal(modalDialog(title ="Please, select your:",
-                            HTML("ID,<br>
+                            HTML("Survey,<br>
+                            ID,<br>
                             station number and<br>
                             reviewer number<br>
                             before loading the station")))
@@ -1503,7 +1517,8 @@ row.show <- reactive({
         }
         pairs3 <- as.data.frame(pairs3)
         names(pairs3) <- c("stn", "counter1", "counter2")
-        rv$pairs <- pairs3
+        pairs3 <<- pairs3
+        rvp$pairs <- pairs3
         DT::datatable(pairs3, colnames = c("stn", "counter1", "counter2"),
                                   selection = list(mode = 'single'))
       })
@@ -1521,26 +1536,38 @@ row.show <- reactive({
                             )))
     }})
   
+  rvp <- reactiveValues(selectedRowPair = as.character())
   # Saving the selected row and updating the selectInput
   observeEvent(input$pair.select, {
-    rv$selectedRowPair = req(input$match_pairs_rows_selected)
+    rvp$selectedRowPair <- req(input$match_pairs_rows_selected)
     # Disable the selectinputbuttons
     shinyjs::disable("surveyID")
     shinyjs::disable("counterID")
     shinyjs::disable("reviewer")
   })
   observeEvent(input$pair.run, {
-    row.match <<- rv$selectedRowPair
+    row.match <<- rvp$selectedRowPair
     counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
     matching.folder <<- paste0(volumes_parent[1], "/matching")
     source(paste0(volumes_parent[1], "/matching/matching_annotations.R"))
-    rv$selectedRowPair = req(input$match_pairs_rows_selected)
     # Disable the selectinputbuttons
     shinyjs::disable("surveyID")
     shinyjs::disable("counterID")
+    shinyjs::disable("stationID")
     shinyjs::disable("reviewer")
   })
   
+  
+  observeEvent(input$pair.run, {
+  output$match_plot <- renderImage({
+    list(src = list.files(paste0(volumes_parent[1], "/matching/match_x_625/match_still_36/match_annotations_plots/"), full.names = T),
+         contentType = 'image/png',
+         width = 600,
+         height = 337.5,
+         alt = "Waiting for matching plot")}, deleteFile = T)
+    })
+
+
 
 } # END OF server
 
