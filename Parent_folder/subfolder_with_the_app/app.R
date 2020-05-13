@@ -110,10 +110,12 @@ ui <- fluidPage(theme = shinytheme("superhero"),
                        height=700
                        )),
     
-    # If not using SIC-matching method:
-    conditionalPanel(condition="input.inreviewer.indexOf('SIC_matching') == -1",
-      # Ancillary data inputs and save button
+    
+      # Ancillary data inputs and save button / matching plot
       column(4,
+             # If not using SIC-matching method:
+             conditionalPanel(condition="input.inreviewer.indexOf('SIC_matching') == -1",
+             # Only for reviewers with ancillary
              conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1 ||
                               input.inreviewer.indexOf('only ancillary') !== -1",
              fluidRow(
@@ -126,15 +128,16 @@ ui <- fluidPage(theme = shinytheme("superhero"),
                column(2, uiOutput("lt")))),
              
              fluidRow(
+               # Only for reviewers with ancyllary:
                conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1 ||
                                 input.inreviewer.indexOf('only ancillary') !== -1", 
                column(2, uiOutput("lm")),
-               # Marine Institute version
+                # Marine Institute version
                conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') == -1",
                                 column(2, uiOutput("sql"))
                )
                ,
-               # Ifremer version. Special request for counting Squat lobsters
+                # Ifremer version. Special request for counting Squat lobsters
                conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') !== -1",
                                 column(2, uiOutput("sqlCN"), actionGroupButtons(c("sqlCless","sqlCmore"), c("-","+"), direction="horizontal", size="sm"))
                )
@@ -142,19 +145,22 @@ ui <- fluidPage(theme = shinytheme("superhero"),
                column(2, uiOutput("fs"))),
                column(6, uiOutput("comm"))),
              
+             # Only for reviewers with ancyllary:
              fluidRow(style = "height:35px;",
                       conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1 ||
                                        input.inreviewer.indexOf('only ancillary') !== -1", 
                column(3, uiOutput("nepInN"), actionGroupButtons(c("nepInless","nepInmore"), c("-","+"), direction="horizontal", size="sm")),
                column(3, uiOutput("nepOutN"), actionGroupButtons(c("nepOutless","nepOutmore"), c("-","+"), direction="horizontal", size="sm"))),
-  
-               
                #br(),
                
                # save button to write ancillary data to .csv file
                column(2,
                       actionButton("anciSave", "Save ancillary")),
-               column(3, textOutput("anc.info"), offset=1)),
+               column(3, textOutput("anc.info"), offset=1))),
+             
+             # If using SIC-matching method:
+             conditionalPanel(condition = "input.inreviewer.indexOf('SIC_matching') !== -1",
+                     column(12, imageOutput("match_plot", height=340))),
              
              hr(),
              
@@ -162,6 +168,9 @@ ui <- fluidPage(theme = shinytheme("superhero"),
               # setting of the datatable
              tags$style(HTML(".dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing,.dataTables_wrapper .dataTables_paginate .paginate_button, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
                              color: #ffffff !important;
+                             }
+                             thead {
+                             color: #ffffff;
                              }")),
               # datatable
              DTOutput("coordinates"),
@@ -170,9 +179,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
               # Button to save counts into database
              column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1))),
   
-  # If using SIC-matching method:
-  conditionalPanel(condition = "input.inreviewer.indexOf('SIC_matching') !== -1",
-                   column(4, imageOutput("match_plot")))),
+  
   
   
   # MIDDLE 2nd ROW: Reset button, non-countable time input, current time info, speed selector
@@ -289,10 +296,16 @@ server <- function(input, output, session) {
     if (input$inSurveyID == "select survey") {
       selectInput("inCounterID", "2nd: select your ID",
                   c("input survey"))
-    } else {
+    } else if (is.null(input$pair.run)) {
       selectInput("inCounterID", "2nd: select your ID",
                   c("select ID",
                     counters[[surv()]], "SIC_matching"))
+    } else if (input$pair.run == 0) {
+      selectInput("inCounterID", "2nd: select your ID",
+                  c("select pair"))
+    } else if (input$pair.run == 1) {
+      selectInput("inCounterID", "2nd: select your ID",
+                  c(paste("SIC", unique(rv$tablebase$counter_ID)[1], unique(rv$tablebase$counter_ID)[2], sep = "_")))
     }
   })
   
@@ -342,7 +355,7 @@ server <- function(input, output, session) {
   
   
   output$stationID <- renderUI({
-    if (input$inCounterID != "SIC_matching") {
+    if (grepl("SIC", input$inCounterID) == F) {
       selectInput("inStationID", "3rd: select station",
                   c("select stn",
                     stations[[surv()]][[input$inCounterID]])
@@ -357,7 +370,7 @@ server <- function(input, output, session) {
     })
   
   output$reviewer <- renderUI({
-    if (input$inCounterID != "SIC_matching") {
+    if (grepl("SIC", input$inCounterID) == F) {
       selectInput("inreviewer", "4th: 1st or 2nd?", c("reviewer n.", c("1st reviewer", "2nd reviewer", "only ancillary")))
     } else {
       selectInput("inreviewer", "4th: 1st or 2nd?", c("SIC_matching"))
@@ -367,7 +380,13 @@ server <- function(input, output, session) {
 
     # Reading the Video operator ID from SURVEYS_and_COUNTERS.csv
   VidOpID <- reactive({
-    unique(surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID) # unique() needed in case the same counter is in more than one survey 
+    # If not using SIC-matching method:
+    conditionalPanel(condition = "input.inreviewer.indexOf('SIC_matching') == -1",
+                     unique(surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID)) # unique() needed in case the same counter is in more than one survey
+    # If using SIC-matching method:
+    conditionalPanel(condition = "input.inreviewer.indexOf('SIC_matching') !== -1",
+                     "SIC_matching")
+    
   })
  
 
@@ -1536,37 +1555,60 @@ row.show <- reactive({
                             )))
     }})
   
-  rvp <- reactiveValues(selectedRowPair = as.character())
   # Saving the selected row and updating the selectInput
-  observeEvent(input$pair.select, {
+  rvp <- reactiveValues(selectedRowPair = as.character())
+    observeEvent(input$pair.select, {
     rvp$selectedRowPair <- req(input$match_pairs_rows_selected)
     # Disable the selectinputbuttons
     shinyjs::disable("surveyID")
     shinyjs::disable("counterID")
     shinyjs::disable("reviewer")
   })
+    
+    # Actions triggered by Run comparison button
   observeEvent(input$pair.run, {
     row.match <<- rvp$selectedRowPair
+    # Run the matching and Lins code when pressing Run
     counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
     matching.folder <<- paste0(volumes_parent[1], "/matching")
     source(paste0(volumes_parent[1], "/matching/matching_annotations.R"))
+    
+
+    
+    # Plotting the matching plot when pressing Run
+    output$match_plot <- renderImage({
+      list(src = list.files(paste0(volumes_parent[1], "/matching/match_x_625/match_still_36/match_annotations_plots/"), full.names = T),
+           contentType = 'image/png',
+           width = 600,
+           height = 337.5,
+           alt = "Waiting for matching plot")}, deleteFile = T)
+    
+    #Creating counts table when pressing Run
+    counter1_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
+                                      rvp$pairs$counter1[rvp$selectedRowPair]),
+                               colClasses = rep("character", n_tablebase))
+    counter2_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
+                                      rvp$pairs$counter2[rvp$selectedRowPair]),
+                               colClasses = rep("character", n_tablebase))
+    rv$tablebase <- rbind(counter1_table, counter2_table)
+    rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
+    
     # Disable the selectinputbuttons
     shinyjs::disable("surveyID")
     shinyjs::disable("counterID")
     shinyjs::disable("stationID")
     shinyjs::disable("reviewer")
+
   })
   
   
-  observeEvent(input$pair.run, {
-  output$match_plot <- renderImage({
-    list(src = list.files(paste0(volumes_parent[1], "/matching/match_x_625/match_still_36/match_annotations_plots/"), full.names = T),
-         contentType = 'image/png',
-         width = 600,
-         height = 337.5,
-         alt = "Waiting for matching plot")}, deleteFile = T)
-    })
-
+  # rv$tablebase <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
+  #                                 input$inSurveyID,"_",input$inStationID,
+  #                                 "_", input$inCounterID,
+  #                                 "_counts.csv"),
+  #                          colClasses = rep("character", n_tablebase))
+  
+  
 
 
 } # END OF server
