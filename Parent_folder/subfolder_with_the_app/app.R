@@ -177,7 +177,8 @@ ui <- fluidPage(theme = shinytheme("superhero"),
               # Button to delete rows from datatable
              column(5, actionButton("delete", "Delete all burrows in current image")),
               # Button to save counts into database
-             column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1))),
+             # column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1)
+             )),
   
   
   
@@ -381,11 +382,13 @@ server <- function(input, output, session) {
     # Reading the Video operator ID from SURVEYS_and_COUNTERS.csv
   VidOpID <- reactive({
     # If not using SIC-matching method:
-    conditionalPanel(condition = "input.inreviewer.indexOf('SIC_matching') == -1",
-                     unique(surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID)) # unique() needed in case the same counter is in more than one survey
+    if (input$inreviewer != "SIC_matching") {
+      unique(surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID) # unique() needed in case the same counter is in more than one survey
+    } else {
     # If using SIC-matching method:
-    conditionalPanel(condition = "input.inreviewer.indexOf('SIC_matching') !== -1",
-                     "SIC_matching")
+      "999"
+    }
+    
     
   })
  
@@ -434,6 +437,7 @@ server <- function(input, output, session) {
                               originalNames = character(0))
   
     # when start button is pressed, create the text file with the original names of the images
+    # Create .txt and counts.csvif the counter is SIC_counter1_counter2
   observeEvent({
     input$start
   }, {
@@ -502,6 +506,82 @@ server <- function(input, output, session) {
         # then read the .txt with the original names
         
         jpgsFiles$jpgsNames <- as.character(readnames[,1])
+        
+        if (input$inreviewer == "SIC_matching") { # Create .txt and counts.csvif the counter is SIC_counter1_counter2
+          # Create images with both annotations for counter SIC_counter1_counter2
+          for (i in 1:nrow(rv$tablebase)) {
+            print(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
+
+            # read the original .jpg picture
+            im <- image_read(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
+
+            # if it is the first burrow in the current still...
+            if (!grepl(paste0("_burrow_", input$inCounterID, ".jpg"), jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])) {
+
+              # do nothing (previous version of the app did something)
+            } else { # if it is NOT the first burrow in the current still...
+
+              file.remove(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
+            }
+
+            # copy im to im4, and draw a circumference on it where the user clicked in the picture
+            im4 <- image_draw(im)
+
+            symbols(as.numeric(rv$tablebase$x[i]), as.numeric(rv$tablebase$y[i]),
+                    circles = 50,
+                    fg = as.numeric(as.factor(rv$tablebase$counter_ID)[i])+1, inches = FALSE, add = TRUE)
+            dev.off()
+
+            # if it is the first burrow in the current still...
+            if (!grepl(paste0("_burrow_", input$inCounterID, ".jpg"), jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])) {
+
+              burrow.name <- gsub(".jpg", paste0("_1_burrow_", input$inCounterID, ".jpg"), jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
+
+              # new name of the image into the .txt file of the Counter
+              jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])] <- burrow.name
+
+              # create new image with new name
+              image_write(im4, path = burrow.name, format = "jpg")
+
+            } else { # if it is NOT the first burrow in the current still...
+
+              burrow.name.old <- jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])]
+
+              burrow.name.new <-  gsub(paste0("0_[^<]+burrow_", input$inCounterID, ".jpg"),
+                                       paste0("0_",
+                                              sum(rv$tablebase$still_n==as.numeric(rv$tablebase$still_n[i]))+1,
+                                              "_burrow_", input$inCounterID, ".jpg"),
+                                       jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
+
+              # new name of the image into the .txt file of the Counter
+              jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])] <- burrow.name.new
+              # create new image with new name
+              image_write(im4, path = burrow.name.new, format = "jpg")
+
+            }
+          }
+          
+          # Write .txt with the jpg names for SIC_counter1_counter2
+          write.table(jpgsFiles$jpgsNames, paste0(as.character(volumes_parent[1]),
+                                                  "/reduced_stn/",
+                                                  input$inStationID,
+                                                  "/",
+                                                  input$inSurveyID,"_",input$inStationID,
+                                                  "_", input$inCounterID,
+                                                  "_images_list.txt"),
+                      row.names=F, col.names=F)
+
+          # Write counts.csv for SIC_counter1_counter2
+          write.table(rv$tablebase,
+                      file = paste0(as.character(volumes_parent[1]), "/app_outcome/counts/",
+                                    input$inSurveyID,"_",input$inStationID,
+                                    "_", input$inCounterID,
+                                    "_counts.csv"),
+                      row.names = F,
+                      sep = ",")
+        }
+        
+        # We finish here the if (input$inreviewer == "SIC_matching")
         
       } else {
         # If this CounterID already has counted the station before,
@@ -1525,7 +1605,7 @@ row.show <- reactive({
     
       output$match_pairs <- renderDataTable({
         pre.pairs <- grep(list.files(path = paste0(volumes_parent[1], "/app_outcome/counts"), pattern = "counts.csv"),
-                          pattern = "SURVEYS_and_COUNTERS|Box|ERROR", inv=T, value=T)
+                          pattern = "SURVEYS_and_COUNTERS|Box|ERROR|SIC_", inv=T, value=T)
         pairs.stn <- sub("*_(.*?) *_.*", "_\\1", sub(".*CV19017_ *(.*?) *_counts.*", "\\1", pre.pairs))
         pairs <- as.data.frame(cbind(as.character(pre.pairs), as.character(pairs.stn)))
         pairs2 <- as.data.frame(aggregate(pre.pairs ~ pairs.stn , data = pairs, FUN = cbind))
@@ -1592,6 +1672,7 @@ row.show <- reactive({
                                colClasses = rep("character", n_tablebase))
     rv$tablebase <- rbind(counter1_table, counter2_table)
     rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
+    
     
     # Disable the selectinputbuttons
     shinyjs::disable("surveyID")
