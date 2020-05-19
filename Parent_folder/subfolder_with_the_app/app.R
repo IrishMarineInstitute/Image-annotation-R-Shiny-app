@@ -175,9 +175,9 @@ ui <- fluidPage(theme = shinytheme("superhero"),
               # datatable
              DTOutput("coordinates"),
               # Button to delete rows from datatable
-             column(5, actionButton("delete", "Delete all burrows in current image")),
+             column(5, actionButton("delete", "Delete all burrows in current image"))
               # Button to save counts into database
-             # column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1)
+             # ,column(4, actionButton("database", "UPLOAD burrow counts to Database"), offset=1)
              )),
   
   
@@ -1497,7 +1497,7 @@ observeEvent({feat$counter}, {
                                           VidOpID(),
                                           as.numeric(substring(all.times()[input$inSlider], 4, 5)) + 1)
   # Order rv$tablebase by still number
-  rv$tablebase <- rv$tablebase[order(rv$tablebase$still_n),]
+  rv$tablebase <- rv$tablebase[order(as.numeric(as.character(rv$tablebase$still_n))),]
   
   # Write .txt with the jpg names for this CounterID (updated every new annotation)
   write.table(jpgsFiles$jpgsNames, paste0(as.character(volumes_parent[1]),
@@ -1529,9 +1529,13 @@ row.show <- reactive({
 
 # Output of the annotation table
   output$coordinates <- DT::renderDT({
+
     DT::datatable(rv$tablebase[,c("station","counter_ID","time","still_n","annotation_time")], selection="single",
               options = list(dom = 'rtip', pageLength = 10, displayStart = row.show())) %>%
       formatStyle(0:5, color="white", backgroundColor = "grey")
+      # formatStyle("still_n", target = "row", color=background)
+    # formatStyle(0:5, target = "row", fontWeight = styleEqual(which(rv$tablebase$still == input$inSlider)[1], "bold"))
+    # formatStyle("still_n", target = "cell", valueColumns = 3, color = c("orange"))
   })
   
   # Showing the last 10 annotations by default in the table
