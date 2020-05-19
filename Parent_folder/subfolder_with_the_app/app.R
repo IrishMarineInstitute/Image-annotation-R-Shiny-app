@@ -1496,6 +1496,8 @@ observeEvent({feat$counter}, {
                                           format(Sys.time(), "%d-%b-%Y %X"),
                                           VidOpID(),
                                           as.numeric(substring(all.times()[input$inSlider], 4, 5)) + 1)
+  # Order rv$tablebase by still number
+  rv$tablebase <- rv$tablebase[order(rv$tablebase$still_n),]
   
   # Write .txt with the jpg names for this CounterID (updated every new annotation)
   write.table(jpgsFiles$jpgsNames, paste0(as.character(volumes_parent[1]),
