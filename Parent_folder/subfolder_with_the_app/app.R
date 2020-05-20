@@ -32,8 +32,20 @@ ui <- fluidPage(theme = shinytheme("superhero"),
     #     return 'Are you sure you want to leave?';
     # };
     # "))),
-                
-                
+             
+    # Progress window setup:   
+    tags$head(
+      tags$style(
+        HTML(".shiny-notification {
+             height: 100px;
+             width: 800px;
+             position:fixed;
+             top: calc(50% - 50px);;
+             left: calc(50% - 400px);;
+             }
+             "
+        )
+        )),
 
   # TOP ROW: 5 steps to start the app:
   fluidRow(
@@ -236,7 +248,7 @@ fluidRow(
   #                            }")),
   # datatable
   conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1",
-  column(3, div(style = 'overflow-y: scroll; height:150px', DTOutput("non_time_table")),
+  column(3, DTOutput("non_time_table"),
          # Button to delete rows from datatable
          actionButton("delete_time", "Delete row", style='padding:4px; font-size:80%')))),
 
@@ -508,9 +520,19 @@ server <- function(input, output, session) {
         jpgsFiles$jpgsNames <- as.character(readnames[,1])
         
         if (input$inreviewer == "SIC_matching") { # Create .txt and counts.csvif the counter is SIC_counter1_counter2
+          
+          # Number of times we'll go through the loop
+          n <- nrow(rv$tablebase)
+          
+          withProgress(message = paste0('Creating ', n, ' annotated images:'), value = 0, {
+            
           # Create images with both annotations for counter SIC_counter1_counter2
           for (i in 1:nrow(rv$tablebase)) {
             print(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
+            
+            # Increment the progress bar, and update the detail text.
+            incProgress(1/n, detail = paste0("annotation ", i, " of ", n))
+
 
             # read the original .jpg picture
             im <- image_read(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
@@ -529,7 +551,7 @@ server <- function(input, output, session) {
 
             symbols(as.numeric(rv$tablebase$x[i]), as.numeric(rv$tablebase$y[i]),
                     circles = 50,
-                    fg = as.numeric(as.factor(rv$tablebase$counter_ID)[i])+1, inches = FALSE, add = TRUE)
+                    fg = as.numeric(as.factor(rv$tablebase$counter_ID)[i])+2, inches = FALSE, add = TRUE)
             dev.off()
 
             # if it is the first burrow in the current still...
@@ -560,6 +582,7 @@ server <- function(input, output, session) {
 
             }
           }
+            })
           
           # Write .txt with the jpg names for SIC_counter1_counter2
           write.table(jpgsFiles$jpgsNames, paste0(as.character(volumes_parent[1]),
@@ -735,6 +758,16 @@ server <- function(input, output, session) {
                                                                                                 "annotation_time",
                                                                                                 "VideoOperatorID",
                                                                                                 "minute")))
+  # rv <- reactiveValues(tablebase = data.frame("survey" = character(),
+  #                                             "station" = character(),
+  #                                             "counter_ID" = character(),
+  #                                             "time" = character(),
+  #                                             "still_n" = integer(),
+  #                                             "feature" = character(),
+  #                                             "x" = character(), "y" = character(),
+  #                                             "annotation_time" = character(),
+  #                                             "VideoOperatorID" = character(),
+  #                                             "minute" = character()))
   ## Table for non-countable time  
   rvTime <- reactiveValues(tableTime = setNames(data.frame(matrix(ncol = 9, nrow = 0)), c("survey",
                                                                                           "station",
@@ -781,7 +814,8 @@ server <- function(input, output, session) {
                                       input$inSurveyID,"_",input$inStationID,
                                       "_", input$inCounterID,
                                       "_counts.csv"),
-                               colClasses = rep("character", n_tablebase))
+                               # colClasses = rep("character", n_tablebase),
+                               stringsAsFactors = FALSE)
     }
     # ancillary
     if(file_test("-f",
@@ -1522,32 +1556,43 @@ observeEvent({feat$counter}, {
 
 
 # Showing the last 10 annotations by default in the table
-row.show <- reactive({
-  if (nrow(rv$tablebase) < 11) {return(0)}
-  if (nrow(rv$tablebase) > 10) {return(nrow(rv$tablebase)-10)}
-})
+# row.show <- reactive({
+#   if (nrow(rv$tablebase) < 11) {return(0)}
+#   if (nrow(rv$tablebase) > 10) {return(nrow(rv$tablebase)-10)}
+# })
+
+# row.show <- reactive({nrow(rv$tablebase)-10})
 
 # Output of the annotation table
   output$coordinates <- DT::renderDT({
-
-    DT::datatable(rv$tablebase[,c("station","counter_ID","time","still_n","annotation_time")], selection="single",
-              options = list(dom = 'rtip', pageLength = 10, displayStart = row.show())) %>%
-      formatStyle(0:5, color="white", backgroundColor = "grey")
+    
+    # row.show <- nrow(rv$tablebase)-1
+# print(row.show())
+    DT::datatable(rv$tablebase[,c("time","still_n","counter_ID","station","annotation_time")],
+                  selection="single", rownames= FALSE,
+                  options = list(dom = 'rti', scrollY = '350px', paging = FALSE, order = list(list(1, 'desc'))
+                                 #, displayStart = 12
+                             # ,                  initComplete  = JS('function() {
+                             #       $(this.api().table().row(12).node());
+                             #       this.api().table().row(12).node().scrollIntoView();
+                             #      }')
+                             )) %>%
+      formatStyle(1:5, color="white", backgroundColor = "grey")
       # formatStyle("still_n", target = "row", color=background)
     # formatStyle(0:5, target = "row", fontWeight = styleEqual(which(rv$tablebase$still == input$inSlider)[1], "bold"))
     # formatStyle("still_n", target = "cell", valueColumns = 3, color = c("orange"))
   })
   
-  # Showing the last 10 annotations by default in the table
-  row.show_time <- reactive({
-    if (nrow(rvTime$tableTime) < 11) {return(0)}
-    if (nrow(rvTime$tableTime) > 10) {return(nrow(rvTime$tableTime)-10)}
-  })
+  # Showing the last 10 time annotations by default in the table
+  # row.show_time <- reactive({
+  #   if (nrow(rvTime$tableTime) < 11) {return(0)}
+  #   if (nrow(rvTime$tableTime) > 10) {return(nrow(rvTime$tableTime)-10)}
+  # })
   
 # Output of the non-countable-time table
   output$non_time_table <- DT::renderDT({
     DT::datatable(rvTime$tableTime[,c("station","counter_ID","start_non_countable","stop_non_countable","minute")], selection="single", rownames= F,
-                  options = list(dom = 't', pageLength = 1000, displayStart = row.show_time(),
+                  options = list(dom = 't', scrollY = '110px', paging = FALSE,
                                  headerCallback = JS("function(thead, data, start, end, display){",
                                                      "  $(thead).remove();",
                                                      "}"))) %>%
@@ -1610,26 +1655,36 @@ row.show <- reactive({
       
     
       output$match_pairs <- renderDataTable({
-        pre.pairs <- grep(list.files(path = paste0(volumes_parent[1], "/app_outcome/counts"), pattern = "counts.csv"),
+        pre.pairs <- grep(grep(list.files(path = paste0(volumes_parent[1], "/app_outcome/counts"),
+                                     pattern = input$inSurveyID),
+                               pattern = "counts.csv", value = T),
                           pattern = "SURVEYS_and_COUNTERS|Box|ERROR|SIC_", inv=T, value=T)
-        pairs.stn <- sub("*_(.*?) *_.*", "_\\1", sub(".*CV19017_ *(.*?) *_counts.*", "\\1", pre.pairs))
-        pairs <- as.data.frame(cbind(as.character(pre.pairs), as.character(pairs.stn)))
-        pairs2 <- as.data.frame(aggregate(pre.pairs ~ pairs.stn , data = pairs, FUN = cbind))
+        pairs.stn <- sub("*_(.*?) *_.*", "_\\1", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs))
+        pairs <- as.data.frame(cbind("file" = as.character(pre.pairs), "st" = as.character(pairs.stn)))
+        pairs <- subset(pairs, st %in% unique(pairs$st[duplicated(pairs$st)])) # only if more than 1 counter has counted the station
+        pairs[,1:2] <- lapply(pairs[,1:2], as.character)
+        pairs2 <- as.data.frame(aggregate(file ~ st , data = pairs, FUN = cbind))
         pairs3 <- NULL
-        for (i in 1:nrow(pairs2)){
-          cur.pair <- cbind(pairs2$pairs.stn[i], combinations(n = length(pairs2$pre.pairs[[i]]), r = 2, v = pairs2$pre.pairs[[i]], repeats.allowed = F))
+        if (nrow(pairs2) == 1) {
+          cur.pair <- cbind(pairs2$st, combinations(n = length(pairs2$file), r = 2, v = pairs2$file, repeats.allowed = F))
           pairs3 <- rbind(pairs3, cur.pair)
+        } else {
+          for (i in 1:nrow(pairs2)){
+            cur.pair <- cbind(pairs2$st[i], combinations(n = length(pairs2$file[[i]]), r = 2, v = pairs2$file[[i]], repeats.allowed = F))
+            pairs3 <- rbind(pairs3, cur.pair)
+          }
         }
         pairs3 <- as.data.frame(pairs3)
         names(pairs3) <- c("stn", "counter1", "counter2")
         pairs3 <<- pairs3
         rvp$pairs <- pairs3
         DT::datatable(pairs3, colnames = c("stn", "counter1", "counter2"),
-                                  selection = list(mode = 'single'))
+                                  selection = list(mode = 'single'),
+                      options = list(dom = 'rtip', scrollY = '600px', paging = FALSE))
       })
       
       
-      showModal(modalDialog(title ="YE",
+      showModal(modalDialog(title ="SIC annotations comparison",
                             HTML("Select the pair you want to check"),
                             br(),
                             br(),
@@ -1653,6 +1708,7 @@ row.show <- reactive({
     
     # Actions triggered by Run comparison button
   observeEvent(input$pair.run, {
+    shinyjs::disable("pair.run")
     row.match <<- rvp$selectedRowPair
     # Run the matching and Lins code when pressing Run
     counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
@@ -1672,10 +1728,12 @@ row.show <- reactive({
     #Creating counts table when pressing Run
     counter1_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
                                       rvp$pairs$counter1[rvp$selectedRowPair]),
-                               colClasses = rep("character", n_tablebase))
+                               stringsAsFactors = FALSE)
+                               # colClasses = rep("character", n_tablebase))
     counter2_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
                                       rvp$pairs$counter2[rvp$selectedRowPair]),
-                               colClasses = rep("character", n_tablebase))
+                               stringsAsFactors = FALSE)
+                               # colClasses = rep("character", n_tablebase))
     rv$tablebase <- rbind(counter1_table, counter2_table)
     rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
     
