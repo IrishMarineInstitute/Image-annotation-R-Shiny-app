@@ -636,9 +636,7 @@ server <- function(input, output, session) {
   # check how many .jpgs are for the station
 
   output$jpgnumber <- renderPrint({
-    # length(jpgsFiles$jpgsNames)
-    
-    (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
+    length(jpgsFiles$jpgsNames)
   })
   
 
@@ -1821,26 +1819,11 @@ observeEvent({feat$counter}, {
                                                               "_", ".*.",
                                                               "_seconds_off.csv")),
                                          colClasses = rep("character", 6))
+      
       all_minutes <- unique(as.numeric(as.character(rvSeconds$tableNonsecs$minute)))
       valid_minutes <- as.numeric(as.character(rvSeconds$tableNonsecs$minute))[as.numeric(as.character(rvSeconds$tableNonsecs$seconds_off)) < 31]
-      showModal(modalDialog(title ="Valid minutes",
-                            HTML("Confirm the valid minutes or edit them manually"),
-                            br(),
-                            br(),
-                            checkboxGroupInput("checkGroup", 
-                                               h3("Checkbox group"), 
-                                               choices = all_minutes,
-                                               # choices = list("Choice 1" = 1, 
-                                               #                "Choice 2" = 2, 
-                                               #                "Choice 3" = 3),
-                                               selected = valid_minutes),
-                            footer = tagList(
-                              modalButton('Cancel'),
-                              bsButton('pair.run', 'Run comparison')
-                              # bsButton('pair.select', 'Select'),
-                              
-                            )))
-      
+      minutes_modal_text <- 'Check that the following minutes are correct. <br> 
+                                                Minutes with more than 30" of non-countable time, as saved by the 1st reviewer, have been unticked automatically.'
       
     } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
                           pattern = paste0(input$inSurveyID,
@@ -1849,9 +1832,29 @@ observeEvent({feat$counter}, {
                                            "_seconds_off.csv"))) == 0) { # if there is none
       
       rvSeconds$tableNonsecs$seconds_off[1] <- "no_seconds_have_been_removed_from_this_station_yet"
-      
+      all_minutes <- 1:20
+      valid_minutes <- ""
+      minutes_modal_text <- 'There is no non_countable data .csv file. <br> 
+                            Select manually the minutes you want to include in the analysis'
     }
     
+    showModal(modalDialog(title ="Confirm the valid minutes or edit them manually",
+                          HTML(minutes_modal_text),
+                          br(),
+                          checkboxGroupInput("confirmed_minutes", 
+                                             h5("Only the ticked minutes will be used to run the Lin's CCC and the matching code:"), 
+                                             choices = all_minutes,
+                                             # choices = list("Choice 1" = 1, 
+                                             #                "Choice 2" = 2, 
+                                             #                "Choice 3" = 3),
+                                             selected = valid_minutes),
+                          footer = tagList(
+                            modalButton('Cancel'),
+                            bsButton('pair.run', 'Run comparison')
+                            # bsButton('pair.select', 'Select'),
+                            
+                          )))
+
   })
   
   
@@ -1860,6 +1863,8 @@ observeEvent({feat$counter}, {
     
     # Actions triggered by Run comparison button
   observeEvent(input$pair.run, {
+    
+    confirmed_minutes <<- input$confirmed_minutes
     
     withProgress(message = paste0('Runing comparison'), value = 0, {
       setProgress(1/5, detail = paste0("Row selected"))
@@ -1915,7 +1920,7 @@ observeEvent({feat$counter}, {
       
       removeModal()
       
-      setProgress(5/5, detail = paste0("Done: You can 'Load stn' now"))
+      setProgress(5/5, detail = paste0("Done: You can now press 'Load stn'"))
       Sys.sleep(2.50)
       # Disable the selectinputbuttons
       shinyjs::disable("surveyID")
