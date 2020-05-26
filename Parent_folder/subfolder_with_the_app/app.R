@@ -376,8 +376,8 @@ server <- function(input, output, session) {
     } else {
       
       selectInput("inStationID", "3rd: select station",
-                  as.character(rvp$pairs$stn[rvp$selectedRowPair],
-                               selected = as.character(rvp$pairs$stn[rvp$selectedRowPair]))
+                  as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                               selected = as.character(rvp$pairs$stn[rvp$selectedRowPair])
       )
       }
     })
@@ -873,7 +873,7 @@ server <- function(input, output, session) {
                   pattern = paste0(input$inSurveyID,
                   "_", input$inStationID,
                   "_", ".*.",
-                  "_seconds_off.csv"))) > 1) {
+                  "_seconds_off.csv"))) > 1) { # If there is more than one
                     
                     showModal(modalDialog(title ="Error: Contact SIC.",
                                           HTML("There are more than one .csv file with non_countable_time data for this station.<br>
@@ -883,7 +883,7 @@ server <- function(input, output, session) {
                                         pattern = paste0(input$inSurveyID,
                                         "_", input$inStationID,
                                         "_", ".*.",
-                                        "_seconds_off.csv"))) == 1) {
+                                        "_seconds_off.csv"))) == 1) { # if there is one
 
                           rvSeconds$tableNonsecs <- read.csv(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
                                              pattern = paste0(input$inSurveyID,
@@ -896,7 +896,7 @@ server <- function(input, output, session) {
                                         pattern = paste0(input$inSurveyID,
                                         "_", input$inStationID,
                                         "_", ".*.",
-                                        "_seconds_off.csv"))) == 0) {
+                                        "_seconds_off.csv"))) == 0) { # if there is none
 
                     rvSeconds$tableNonsecs$seconds_off[1] <- "no_seconds_have_been_removed_from_this_station_yet"
                     
@@ -1732,6 +1732,60 @@ observeEvent({feat$counter}, {
       counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
       matching.folder <<- paste0(volumes_parent[1], "/matching")
       
+      # Check which minutes are valid
+      # seconds_off time
+      if(length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                    pattern = paste0(input$inSurveyID,
+                                     "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                     "_", ".*.",
+                                     "_seconds_off.csv"))) > 1) { # If there is more than one
+        
+        showModal(modalDialog(title ="Error: Contact SIC.",
+                              HTML("There are more than one .csv file with non_countable_time data for this station.<br>
+                                   SIC must check the app_outcome/non_countable_time folder and delete the duplicated .csv files that shouldn't be there.")))
+        
+      } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                            pattern = paste0(input$inSurveyID,
+                                             "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                             "_", ".*.",
+                                             "_seconds_off.csv"))) == 1) { # if there is one
+        
+        rvSeconds$tableNonsecs <- read.csv(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                                               pattern = paste0(input$inSurveyID,
+                                                                "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                                                "_", ".*.",
+                                                                "_seconds_off.csv")),
+                                           colClasses = rep("character", 6))
+        all_minutes <- unique(as.numeric(as.character(rvSeconds$tableNonsecs$minute)))
+        valid_minutes <- as.numeric(as.character(rvSeconds$tableNonsecs$minute))[rvSeconds$tableNonsecs$seconds_off < 31]
+        showModal(modalDialog(title ="Valid minutes",
+                              HTML("Confirm the valid minutes or edit them manually"),
+                              br(),
+                              br(),
+                              checkboxGroupInput("checkGroup", 
+                                                 h3("Checkbox group"), 
+                                                 choices = all_minutes,
+                                                 # choices = list("Choice 1" = 1, 
+                                                 #                "Choice 2" = 2, 
+                                                 #                "Choice 3" = 3),
+                                                 selected = valid_minutes),
+                              footer = tagList(
+                                modalButton('Cancel')
+                                # bsButton('pair.select', 'Select'),
+
+                              )))
+        
+        
+      } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                            pattern = paste0(input$inSurveyID,
+                                             "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                             "_", ".*.",
+                                             "_seconds_off.csv"))) == 0) { # if there is none
+        
+        rvSeconds$tableNonsecs$seconds_off[1] <- "no_seconds_have_been_removed_from_this_station_yet"
+        
+      }
+      
       setProgress(2/5, detail = paste0("Running Lin's CCC and matching code"))
       source(paste0(volumes_parent[1], "/matching/matching_annotations.R"))
       
@@ -1767,7 +1821,7 @@ observeEvent({feat$counter}, {
       # order by still number
       rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
       
-      removeModal()
+      # removeModal()
       
       setProgress(5/5, detail = paste0("Done: You can 'Load stn' now"))
       Sys.sleep(2.50)
