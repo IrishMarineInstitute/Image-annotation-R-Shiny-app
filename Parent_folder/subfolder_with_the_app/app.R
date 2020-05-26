@@ -522,16 +522,14 @@ server <- function(input, output, session) {
         if (input$inreviewer == "SIC_matching") { # Create .txt and counts.csvif the counter is SIC_counter1_counter2
           
           # Number of times we'll go through the loop
-          n <- nrow(rv$tablebase)
-          
-          withProgress(message = paste0('Creating ', n, ' annotated images:'), value = 0, {
-            
+          withProgress(message = paste0('Creating ', nrow(rv$tablebase), ' annotated images:'), value = 0, {
+
           # Create images with both annotations for counter SIC_counter1_counter2
           for (i in 1:nrow(rv$tablebase)) {
             print(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
             
             # Increment the progress bar, and update the detail text.
-            incProgress(1/n, detail = paste0("annotation ", i, " of ", n))
+            incProgress(1/nrow(rv$tablebase), detail = paste0("annotation ", i, " of ", nrow(rv$tablebase)))
 
 
             # read the original .jpg picture
@@ -1691,60 +1689,76 @@ observeEvent({feat$counter}, {
                             DT::dataTableOutput('match_pairs'),
                             footer = tagList(
                               modalButton('Cancel'), 
-                              bsButton('pair.select', 'Select'),
+                              # bsButton('pair.select', 'Select'),
                               bsButton('pair.run', 'Run comparison')
                             )))
     }})
   
-  # Saving the selected row and updating the selectInput
   rvp <- reactiveValues(selectedRowPair = as.character())
-    observeEvent(input$pair.select, {
-    rvp$selectedRowPair <- req(input$match_pairs_rows_selected)
-    # Disable the selectinputbuttons
-    shinyjs::disable("surveyID")
-    shinyjs::disable("counterID")
-    shinyjs::disable("reviewer")
-  })
+  
+  
+
+
     
     # Actions triggered by Run comparison button
   observeEvent(input$pair.run, {
-    shinyjs::disable("pair.run")
-    row.match <<- rvp$selectedRowPair
-    # Run the matching and Lins code when pressing Run
-    counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
-    matching.folder <<- paste0(volumes_parent[1], "/matching")
-    source(paste0(volumes_parent[1], "/matching/matching_annotations.R"))
     
-
-    
-    # Plotting the matching plot when pressing Run
-    output$match_plot <- renderImage({
-      list(src = list.files(paste0(volumes_parent[1], "/matching/match_x_625/match_still_36/match_annotations_plots/"), full.names = T),
-           contentType = 'image/png',
-           width = 600,
-           height = 337.5,
-           alt = "Waiting for matching plot")}, deleteFile = T)
-    
-    #Creating counts table when pressing Run
-    counter1_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
-                                      rvp$pairs$counter1[rvp$selectedRowPair]),
-                               stringsAsFactors = FALSE)
-                               # colClasses = rep("character", n_tablebase))
-    counter2_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
-                                      rvp$pairs$counter2[rvp$selectedRowPair]),
-                               stringsAsFactors = FALSE)
-                               # colClasses = rep("character", n_tablebase))
-    rv$tablebase <- rbind(counter1_table, counter2_table)
-    rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
-    
-    
-    # Disable the selectinputbuttons
-    shinyjs::disable("surveyID")
-    shinyjs::disable("counterID")
-    shinyjs::disable("stationID")
-    shinyjs::disable("reviewer")
-
+    withProgress(message = paste0('Runing comparison'), value = 0, {
+      setProgress(1/5, detail = paste0("Row selected"))
+      
+      # Saving the selected row and updating the selectInput
+      rvp$selectedRowPair <- req(input$match_pairs_rows_selected)
+      # Disable the selectinputbuttons
+      shinyjs::disable("surveyID")
+      shinyjs::disable("counterID")
+      shinyjs::disable("reviewer")
+      
+      shinyjs::disable("pair.run")
+      row.match <<- rvp$selectedRowPair
+      # Run the matching and Lins code when pressing Run
+      counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
+      matching.folder <<- paste0(volumes_parent[1], "/matching")
+      
+      setProgress(2/5, detail = paste0("Running Lin's CCC and matching code"))
+      source(paste0(volumes_parent[1], "/matching/matching_annotations.R"))
+      
+  
+      setProgress(3/5, detail = paste0("Plotting matches"))
+      # Plotting the matching plot when pressing Run
+      output$match_plot <- renderImage({
+        list(src = list.files(paste0(volumes_parent[1], "/matching/match_x_625/match_still_36/match_annotations_plots/"), full.names = T),
+             contentType = 'image/png',
+             width = 600,
+             height = 337.5,
+             alt = "Waiting for matching plot")}, deleteFile = T)
+      
+      
+      setProgress(4/5, detail = paste0("Showing combined count table"))
+      #Creating counts table when pressing Run
+      counter1_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
+                                        rvp$pairs$counter1[rvp$selectedRowPair]),
+                                 stringsAsFactors = FALSE)
+                                 # colClasses = rep("character", n_tablebase))
+      counter2_table <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
+                                        rvp$pairs$counter2[rvp$selectedRowPair]),
+                                 stringsAsFactors = FALSE)
+                                 # colClasses = rep("character", n_tablebase))
+      rv$tablebase <- rbind(counter1_table, counter2_table)
+      rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
+      
+      removeModal()
+      
+      setProgress(5/5, detail = paste0("Done: You can 'Load stn' now"))
+      Sys.sleep(2.50)
+      # Disable the selectinputbuttons
+      shinyjs::disable("surveyID")
+      shinyjs::disable("counterID")
+      shinyjs::disable("stationID")
+      shinyjs::disable("reviewer")
+  
+    })
   })
+  
   
   
   # rv$tablebase <- read.csv(paste0(as.character(volumes_parent[1]),"/app_outcome/counts/",
