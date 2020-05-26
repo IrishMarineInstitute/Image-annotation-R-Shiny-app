@@ -636,7 +636,9 @@ server <- function(input, output, session) {
   # check how many .jpgs are for the station
 
   output$jpgnumber <- renderPrint({
-    length(jpgsFiles$jpgsNames)
+    # length(jpgsFiles$jpgsNames)
+    
+    (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
   })
   
 
@@ -777,13 +779,19 @@ server <- function(input, output, session) {
                                                                                           "VideoOperatorID",
                                                                                           "minute",
                                                                                           "seconds")))
+
   
-  rvSeconds <- reactiveValues(tableNonsecs = setNames(data.frame(matrix(ncol = 6, nrow = 20)), c("survey",
+  rvSeconds <- reactiveValues(tableNonsecs = setNames(data.frame(matrix(ncol = 6, nrow = 20)), c("survey", # 20 by default
                                                                                               "station",
                                                                                               "counter_ID",
                                                                                               "VideoOperatorID",
                                                                                               "minute",
                                                                                               "seconds_off")))
+  observeEvent({input$start}, { # but, as soon as we press input$start, we take the real number of minutes in the footage
+    rvSeconds$tableNonsecs <- rvSeconds$tableNonsecs[1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1),]
+  })
+  
+  
   ## Table for ancillary data  
   n_variables <- 16
   rvAncillary <- reactiveValues(tableAncillary = setNames(data.frame(matrix(ncol = n_variables, nrow = 0)), c("survey",
@@ -867,7 +875,7 @@ server <- function(input, output, session) {
                                           "_non_countable_time.csv"),
                                    colClasses = rep("character", 9))
     }
-    
+
     # seconds_off time
     if(length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
                   pattern = paste0(input$inSurveyID,
@@ -1200,7 +1208,7 @@ server <- function(input, output, session) {
       rvSeconds$tableNonsecs$station <- input$inStationID
       rvSeconds$tableNonsecs$counter_ID <- input$inCounterID
       rvSeconds$tableNonsecs$VideoOperatorID <- VidOpID()
-      rvSeconds$tableNonsecs$minute <- 1:20
+      rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
       for(i in unique(rvSeconds$tableNonsecs$minute)) {
         non_calc_cur <- subset(non_calc, minute == i)
         non_secs_cur <- length(unique(as.numeric(unlist(strsplit(non_calc_cur$seconds, '_')))))
@@ -1215,21 +1223,41 @@ server <- function(input, output, session) {
                   row.names = F,
                   sep = ",")
       
-      df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
-      rvColor$df <- rvColor$df[1:2,-c(21:40)]
-      rvColor$df[1,] <- df[1,]
-      rvColor$df[2,] <- df[2,]
-      dataCol_df <- ncol(rvColor$df)
-      dataColRng <- 1:dataCol_df
-      argColRng <- (dataCol_df + 1):(dataCol_df * 2)
-      rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
+      # rvColor <- setNames(data.frame(matrix(ncol = (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1), nrow = 3)), c(1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)))
+      # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+      # rvColor <- rvColor[1:2,-c(21:40)]
+      # rvColor[1,] <- df[1,]
+      # rvColor[2,] <- df[2,]
+      # dataCol_df <- ncol(rvColor)
+      # dataColRng <- 1:dataCol_df
+      # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+      # rvColor[2, argColRng] <- as.numeric(rvColor[2, dataColRng]) > 30
+      
+      # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+      # rvColor() <- rvColor()[1:2,-c(21:40)]
+      # rvColor()[1,] <- df[1,]
+      # rvColor()[2,] <- df[2,]
+      # dataCol_df <- ncol(rvColor())
+      # dataColRng <- 1:dataCol_df
+      # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+      # rvColor()[2, argColRng] <- as.numeric(rvColor()[2, dataColRng]) > 30
+      
+      # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+      # rvColor$df <- rvColor$df[1:2,-c(21:40)]
+      # rvColor$df[1,] <- df[1,]
+      # rvColor$df[2,] <- df[2,]
+      # dataCol_df <- ncol(rvColor$df)
+      # dataColRng <- 1:dataCol_df
+      # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+      # rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
       
     }  
       
     } else {
       
       showModal(modalDialog(title ="Warning:",
-                            HTML("You cannot log non-countable data for this station because another user has already logged this data.")))
+                            HTML("You cannot log non-countable data for this station because another user has already logged this data. <br>
+                                 Are you sure you are the 1st reviewer and that you have to log non-countable data?")))
     }
     
 
@@ -1463,7 +1491,7 @@ observeEvent(input$delete_time, {
     rvSeconds$tableNonsecs$station <- input$inStationID
     rvSeconds$tableNonsecs$counter_ID <- input$inCounterID
     rvSeconds$tableNonsecs$VideoOperatorID <- VidOpID()
-    rvSeconds$tableNonsecs$minute <- 1:20
+    rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
     for(i in unique(rvSeconds$tableNonsecs$minute)) {
       non_calc_cur <- subset(non_calc, minute == i)
       non_secs_cur <- length(unique(as.numeric(unlist(strsplit(non_calc_cur$seconds, '_')))))
@@ -1478,15 +1506,33 @@ observeEvent(input$delete_time, {
                 row.names = F,
                 sep = ",")
     
+    # rvColor <- setNames(data.frame(matrix(ncol = 20, nrow = 3)), c(1:20))
+    # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+    # rvColor <- rvColor[1:2,-c(21:40)]
+    # rvColor[1,] <- df[1,]
+    # rvColor[2,] <- df[2,]
+    # dataCol_df <- ncol(rvColor)
+    # dataColRng <- 1:dataCol_df
+    # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+    # rvColor[2, argColRng] <- as.numeric(rvColor[2, dataColRng]) > 30
     
-    df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
-    rvColor$df <- rvColor$df[1:2,-c(21:40)]
-    rvColor$df[1,] <- df[1,]
-    rvColor$df[2,] <- df[2,]
-    dataCol_df <- ncol(rvColor$df)
-    dataColRng <- 1:dataCol_df
-    argColRng <- (dataCol_df + 1):(dataCol_df * 2)
-    rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
+    # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+    # rvColor() <- rvColor()[1:2,-c(21:40)]
+    # rvColor()[1,] <- df[1,]
+    # rvColor()[2,] <- df[2,]
+    # dataCol_df <- ncol(rvColor())
+    # dataColRng <- 1:dataCol_df
+    # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+    # rvColor()[2, argColRng] <- as.numeric(rvColor()[2, dataColRng]) > 30
+    
+    # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+    # rvColor$df <- rvColor$df[1:2,-c(21:40)]
+    # rvColor$df[1,] <- df[1,]
+    # rvColor$df[2,] <- df[2,]
+    # dataCol_df <- ncol(rvColor$df)
+    # dataColRng <- 1:dataCol_df
+    # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+    # rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
 
     
   } else {
@@ -1610,34 +1656,71 @@ observeEvent({feat$counter}, {
       formatStyle(1:6, color="black", backgroundColor = "bisque")
   })
   
+
+  # rvColor <- reactiveValues(df = setNames(data.frame(matrix(ncol = 20, nrow = 3)), c(1:20)))
   
-  rvColor <- reactiveValues(df = setNames(data.frame(matrix(ncol = 20, nrow = 3)), c(1:20)))
-  
-  observeEvent({input$start}, {
-    
+  # rvColor <- eventReactive(input$start, {
+  #   rvCol <- setNames(data.frame(matrix(ncol = (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1), nrow = 3)), c(1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)))
+  #   df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+  #   rvCol <- rvCol[1:2,-c((((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))]
+  #   rvCol[1,] <- df[1,]
+  #   rvCol[2,] <- df[2,]
+  #   dataCol_df <- ncol(rvCol)
+  #   dataColRng <- 1:dataCol_df
+  #   argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+  #   rvCol[2, argColRng] <- as.numeric(rvCol[2, dataColRng]) > 30
+  #   return(rvCol)
+  # })
+  # rvColor <- eventReactive(input$confirmTime, {
+  #   rvCol <- setNames(data.frame(matrix(ncol = (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1), nrow = 3)), c(1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)))
+  #   df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+  #   rvCol <- rvCol[1:2,-c((((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))]
+  #   rvCol[1,] <- df[1,]
+  #   rvCol[2,] <- df[2,]
+  #   dataCol_df <- ncol(rvCol)
+  #   dataColRng <- 1:dataCol_df
+  #   argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+  #   rvCol[2, argColRng] <- as.numeric(rvCol[2, dataColRng]) > 30
+  #   return(rvCol)
+  # })
+  rvColor <- reactive({
+    rvCol <- setNames(data.frame(matrix(ncol = (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1), nrow = 3)), c(1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)))
     df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
-    rvColor$df <- rvColor$df[1:2,-c(21:40)]
-    rvColor$df[1,] <- df[1,]
-    rvColor$df[2,] <- df[2,]
-    dataCol_df <- ncol(rvColor$df)
+    rvCol <- rvCol[1:2,-c((((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))]
+    rvCol[1,] <- df[1,]
+    rvCol[2,] <- df[2,]
+    dataCol_df <- ncol(rvCol)
     dataColRng <- 1:dataCol_df
     argColRng <- (dataCol_df + 1):(dataCol_df * 2)
-    rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
+    rvCol[2, argColRng] <- as.numeric(rvCol[2, dataColRng]) > 30
+    return(rvCol)
   })
+  
+  # observeEvent({input$start}, {
+    # df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
+    # rvColor$df <- rvColor$df[1:2,-c(21:40)]
+    # rvColor$df[1,] <- df[1,]
+    # rvColor$df[2,] <- df[2,]
+    # dataCol_df <- ncol(rvColor$df)
+    # dataColRng <- 1:dataCol_df
+    # argColRng <- (dataCol_df + 1):(dataCol_df * 2)
+    # rvColor$df[2, argColRng] <- as.numeric(rvColor$df[2, dataColRng]) > 30
+  # })
     
 
   # Output of seconds_off table with red color for minutes with more than 30 seconds kicked out.
   output$non_seconds_table <- DT::renderDT({
- 
-    DT::datatable(rvColor$df, selection="none", rownames= "",
+    
+    DT::datatable(rvColor(), selection="none", rownames= "",
+    # DT::datatable(rvColor$df, selection="none", rownames= "",
                   options = list(dom = 't',
                                  headerCallback = JS("function(thead, data, start, end, display){",
                                                      "  $(thead).remove();",
                                                      "}"),
-                                 columnDefs = list(list(visible=FALSE, targets=21:40))
+                                 columnDefs = list(list(visible=FALSE, targets=(((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2)))
                                  )) %>%
-      formatStyle(columns = 1:40,
-                  valueColumns = 21:40,
+      formatStyle(columns = 1:((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2),
+                  valueColumns = (((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1):((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2),
                   backgroundColor = styleEqual(c('0', '1'),
                                                c("lightgreen", "tomato"), default="bisque"),
                   color="black")
@@ -1703,11 +1786,73 @@ observeEvent({feat$counter}, {
                             footer = tagList(
                               modalButton('Cancel'), 
                               # bsButton('pair.select', 'Select'),
-                              bsButton('pair.run', 'Run comparison')
+                              bsButton('check.mins', 'Select and check minutes')
                             )))
     }})
   
   rvp <- reactiveValues(selectedRowPair = as.character())
+  
+  observeEvent(input$check.mins, {
+
+    # Saving the selected row and updating the selectInput
+    rvp$selectedRowPair <- req(input$match_pairs_rows_selected)
+    
+    # Check which minutes are valid
+    # seconds_off time
+    if(length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                  pattern = paste0(input$inSurveyID,
+                                   "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                   "_", ".*.",
+                                   "_seconds_off.csv"))) > 1) { # If there is more than one
+      
+      showModal(modalDialog(title ="Error: Contact SIC.",
+                            HTML("There are more than one .csv file with non_countable_time data for this station.<br>
+                                 SIC must check the app_outcome/non_countable_time folder and delete the duplicated .csv files that shouldn't be there.")))
+      
+    } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                          pattern = paste0(input$inSurveyID,
+                                           "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                           "_", ".*.",
+                                           "_seconds_off.csv"))) == 1) { # if there is one
+      
+      rvSeconds$tableNonsecs <- read.csv(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                                             pattern = paste0(input$inSurveyID,
+                                                              "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                                              "_", ".*.",
+                                                              "_seconds_off.csv")),
+                                         colClasses = rep("character", 6))
+      all_minutes <- unique(as.numeric(as.character(rvSeconds$tableNonsecs$minute)))
+      valid_minutes <- as.numeric(as.character(rvSeconds$tableNonsecs$minute))[as.numeric(as.character(rvSeconds$tableNonsecs$seconds_off)) < 31]
+      showModal(modalDialog(title ="Valid minutes",
+                            HTML("Confirm the valid minutes or edit them manually"),
+                            br(),
+                            br(),
+                            checkboxGroupInput("checkGroup", 
+                                               h3("Checkbox group"), 
+                                               choices = all_minutes,
+                                               # choices = list("Choice 1" = 1, 
+                                               #                "Choice 2" = 2, 
+                                               #                "Choice 3" = 3),
+                                               selected = valid_minutes),
+                            footer = tagList(
+                              modalButton('Cancel'),
+                              bsButton('pair.run', 'Run comparison')
+                              # bsButton('pair.select', 'Select'),
+                              
+                            )))
+      
+      
+    } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
+                          pattern = paste0(input$inSurveyID,
+                                           "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
+                                           "_", ".*.",
+                                           "_seconds_off.csv"))) == 0) { # if there is none
+      
+      rvSeconds$tableNonsecs$seconds_off[1] <- "no_seconds_have_been_removed_from_this_station_yet"
+      
+    }
+    
+  })
   
   
 
@@ -1719,8 +1864,7 @@ observeEvent({feat$counter}, {
     withProgress(message = paste0('Runing comparison'), value = 0, {
       setProgress(1/5, detail = paste0("Row selected"))
       
-      # Saving the selected row and updating the selectInput
-      rvp$selectedRowPair <- req(input$match_pairs_rows_selected)
+
       # Disable the selectinputbuttons
       shinyjs::disable("surveyID")
       shinyjs::disable("counterID")
@@ -1731,60 +1875,8 @@ observeEvent({feat$counter}, {
       # Run the matching and Lins code when pressing Run
       counts.folder <<- paste0(volumes_parent[1], "/app_outcome/counts")
       matching.folder <<- paste0(volumes_parent[1], "/matching")
-      
-      # Check which minutes are valid
-      # seconds_off time
-      if(length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
-                    pattern = paste0(input$inSurveyID,
-                                     "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
-                                     "_", ".*.",
-                                     "_seconds_off.csv"))) > 1) { # If there is more than one
-        
-        showModal(modalDialog(title ="Error: Contact SIC.",
-                              HTML("There are more than one .csv file with non_countable_time data for this station.<br>
-                                   SIC must check the app_outcome/non_countable_time folder and delete the duplicated .csv files that shouldn't be there.")))
-        
-      } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
-                            pattern = paste0(input$inSurveyID,
-                                             "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
-                                             "_", ".*.",
-                                             "_seconds_off.csv"))) == 1) { # if there is one
-        
-        rvSeconds$tableNonsecs <- read.csv(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
-                                               pattern = paste0(input$inSurveyID,
-                                                                "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
-                                                                "_", ".*.",
-                                                                "_seconds_off.csv")),
-                                           colClasses = rep("character", 6))
-        all_minutes <- unique(as.numeric(as.character(rvSeconds$tableNonsecs$minute)))
-        valid_minutes <- as.numeric(as.character(rvSeconds$tableNonsecs$minute))[rvSeconds$tableNonsecs$seconds_off < 31]
-        showModal(modalDialog(title ="Valid minutes",
-                              HTML("Confirm the valid minutes or edit them manually"),
-                              br(),
-                              br(),
-                              checkboxGroupInput("checkGroup", 
-                                                 h3("Checkbox group"), 
-                                                 choices = all_minutes,
-                                                 # choices = list("Choice 1" = 1, 
-                                                 #                "Choice 2" = 2, 
-                                                 #                "Choice 3" = 3),
-                                                 selected = valid_minutes),
-                              footer = tagList(
-                                modalButton('Cancel')
-                                # bsButton('pair.select', 'Select'),
 
-                              )))
-        
-        
-      } else if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
-                            pattern = paste0(input$inSurveyID,
-                                             "_", as.character(rvp$pairs$stn[rvp$selectedRowPair]),
-                                             "_", ".*.",
-                                             "_seconds_off.csv"))) == 0) { # if there is none
-        
-        rvSeconds$tableNonsecs$seconds_off[1] <- "no_seconds_have_been_removed_from_this_station_yet"
-        
-      }
+
       
       setProgress(2/5, detail = paste0("Running Lin's CCC and matching code"))
       source(paste0(volumes_parent[1], "/matching/matching_annotations.R"))
@@ -1821,7 +1913,7 @@ observeEvent({feat$counter}, {
       # order by still number
       rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
       
-      # removeModal()
+      removeModal()
       
       setProgress(5/5, detail = paste0("Done: You can 'Load stn' now"))
       Sys.sleep(2.50)
