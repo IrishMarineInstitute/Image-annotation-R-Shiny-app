@@ -517,6 +517,7 @@ server <- function(input, output, session) {
         # If this CounterID has never counted this station before,
         # then read the .txt with the original names
         
+        
         jpgsFiles$jpgsNames <- as.character(readnames[,1])
         
         if (input$inreviewer == "SIC_matching") { # Create .txt and counts.csvif the counter is SIC_counter1_counter2
@@ -526,7 +527,7 @@ server <- function(input, output, session) {
 
           # Create images with both annotations for counter SIC_counter1_counter2
           for (i in 1:nrow(rv$tablebase)) {
-            print(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
+            # print(jpgsFiles$jpgsNames[as.numeric(rv$tablebase$still_n[i])])
             
             # Increment the progress bar, and update the detail text.
             incProgress(1/nrow(rv$tablebase), detail = paste0("annotation ", i, " of ", nrow(rv$tablebase)))
@@ -549,7 +550,7 @@ server <- function(input, output, session) {
 
             symbols(as.numeric(rv$tablebase$x[i]), as.numeric(rv$tablebase$y[i]),
                     circles = 50,
-                    fg = as.numeric(as.factor(rv$tablebase$counter_ID)[i])+2, inches = FALSE, add = TRUE)
+                    fg = c("green3", "orangered", "steelblue", "orange")[as.numeric(as.factor(rv$tablebase$feature)[i])], inches = FALSE, add = TRUE)
             dev.off()
 
             # if it is the first burrow in the current still...
@@ -1566,7 +1567,17 @@ observeEvent({feat$counter}, {
     
     # row.show <- nrow(rv$tablebase)-1
 # print(row.show())
-    DT::datatable(rv$tablebase[,c("time","still_n","counter_ID","station","annotation_time")],
+    
+    if (input$inreviewer == "SIC_matching"){
+      DT::datatable(rv$tablebase[,c("time","still_n","feature","station","annotation_time")],
+                    selection="single", rownames= FALSE,
+                    options = list(dom = 'rti', scrollY = '350px', paging = FALSE, order = list(list(1, 'desc'))
+                    )) %>%
+        formatStyle(1:5, color="white", backgroundColor = "grey")
+      
+      
+    } else {
+          DT::datatable(rv$tablebase[,c("time","still_n","counter_ID","station","annotation_time")],
                   selection="single", rownames= FALSE,
                   options = list(dom = 'rti', scrollY = '350px', paging = FALSE, order = list(list(1, 'desc'))
                                  #, displayStart = 12
@@ -1579,6 +1590,8 @@ observeEvent({feat$counter}, {
       # formatStyle("still_n", target = "row", color=background)
     # formatStyle(0:5, target = "row", fontWeight = styleEqual(which(rv$tablebase$still == input$inSlider)[1], "bold"))
     # formatStyle("still_n", target = "cell", valueColumns = 3, color = c("orange"))
+    }
+
   })
   
   # Showing the last 10 time annotations by default in the table
@@ -1744,6 +1757,14 @@ observeEvent({feat$counter}, {
                                  stringsAsFactors = FALSE)
                                  # colClasses = rep("character", n_tablebase))
       rv$tablebase <- rbind(counter1_table, counter2_table)
+      
+      # for 4 kolors
+      base.merged <- merge(rv$tablebase, final, all=T)
+      base.merged$kol <- as.character(base.merged$kol)
+      base.merged$kol[is.na(base.merged$kol)] <- paste0(as.character(base.merged$counter_ID[is.na(base.merged$kol)]), "_no")
+      base.merged$feature <- as.factor(base.merged$kol)
+      rv$tablebase <- base.merged[names(rv$tablebase)]
+      # order by still number
       rv$tablebase <- rv$tablebase[order(as.numeric(rv$tablebase$still_n)),]
       
       removeModal()
@@ -1755,6 +1776,7 @@ observeEvent({feat$counter}, {
       shinyjs::disable("counterID")
       shinyjs::disable("stationID")
       shinyjs::disable("reviewer")
+      
   
     })
   })
