@@ -318,7 +318,8 @@ server <- function(input, output, session) {
                   c("select pair"))
     } else if (input$pair.run == 1) {
       selectInput("inCounterID", "2nd: select your ID",
-                  c(paste("SIC", unique(rv$tablebase$counter_ID)[1], unique(rv$tablebase$counter_ID)[2], sep = "_")))
+                  # c(paste("SIC", unique(rv$tablebase$counter_ID)[1], unique(rv$tablebase$counter_ID)[2], sep = "_")))
+                  c(paste("SIC", anon1, anon2, sep = "_")))
     }
   })
   
