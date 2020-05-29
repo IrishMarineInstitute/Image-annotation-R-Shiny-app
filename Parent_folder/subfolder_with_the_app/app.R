@@ -1763,7 +1763,8 @@ observeEvent({feat$counter}, {
           pairs3 <- rbind(pairs3, cur.pair)
         } else {
           for (i in 1:nrow(pairs2)){
-            cur.pair <- cbind(pairs2$st[i], combinations(n = length(pairs2$file[[i]]), r = 2, v = pairs2$file[[i]], repeats.allowed = F))
+            # cur.pair <- cbind(pairs2$st[i], combinations(n = length(pairs2$file[[i]]), r = 2, v = pairs2$file[[i]], repeats.allowed = F))
+            cur.pair <- cbind(pairs2$st[i], combinations(n = length(pairs2$file[i,]), r = 2, v = pairs2$file[i,], repeats.allowed = F))
             pairs3 <- rbind(pairs3, cur.pair)
           }
         }
