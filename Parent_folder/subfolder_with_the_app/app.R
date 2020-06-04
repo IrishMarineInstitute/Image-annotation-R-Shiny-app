@@ -1758,16 +1758,25 @@ observeEvent({feat$counter}, {
         pairs[,1:2] <- lapply(pairs[,1:2], as.character)
         pairs2 <- as.data.frame(aggregate(file ~ st , data = pairs, FUN = cbind))
         pairs3 <- NULL
-        if (nrow(pairs2) == 1) {
+        if (nrow(pairs2) == 1) { # if there is only 1 station pairing
           cur.pair <- cbind(pairs2$st, combinations(n = length(pairs2$file), r = 2, v = pairs2$file, repeats.allowed = F))
           pairs3 <- rbind(pairs3, cur.pair)
-        } else {
-          for (i in 1:nrow(pairs2)){
-            # cur.pair <- cbind(pairs2$st[i], combinations(n = length(pairs2$file[[i]]), r = 2, v = pairs2$file[[i]], repeats.allowed = F))
+          
+        } else if (is.matrix(pairs2$file)) {
+          
+          for (i in 1:nrow(pairs2)){ # if all the stations have the same number of counters
             cur.pair <- cbind(pairs2$st[i], combinations(n = length(pairs2$file[i,]), r = 2, v = pairs2$file[i,], repeats.allowed = F))
             pairs3 <- rbind(pairs3, cur.pair)
           }
+          
+        } else if (is.list(pairs2$file)) { # if all the stations don't have the same number of counters
+          
+          for (i in 1:nrow(pairs2)){
+            cur.pair <- cbind(pairs2$st[i], combinations(n = length(pairs2$file[[i]]), r = 2, v = pairs2$file[[i]], repeats.allowed = F))
+            pairs3 <- rbind(pairs3, cur.pair)
+          }
         }
+        
         pairs3 <- as.data.frame(pairs3)
         names(pairs3) <- c("stn", "counter1", "counter2")
         pairs3 <<- pairs3
