@@ -735,14 +735,15 @@ server <- function(input, output, session) {
                          as.POSIXct(ex$DateTimeOriginal[1], format="%Y-%b-%d %H:%M:%OS"),
                          units = "secs")
     
-    return(hms(seconds = seq(0, as.numeric(tot.time), length=length(jpgsFiles$jpgsNames))))
+    pre_all.times <- hms(seconds = seq(0, as.numeric(tot.time), length=length(jpgsFiles$jpgsNames)))
+    return(substring(pre_all.times, 4, 8))
     
   })
   
   # displaying the time of the current image as mm:ss.
   # Time as 00:00 first image, XX:XX last image (usually 10:00 for UWTV footage)
   output$timer <- renderText({
-    substring(all.times()[input$inSlider], 4, 8)
+    all.times()[input$inSlider]
   })
   
   
