@@ -1167,6 +1167,7 @@ server <- function(input, output, session) {
   observeEvent({input$confirmTime},{
     
     # Only if there is no seconds_off.csv file created for this station
+    # Or if this counter created the file before
     if (length(dir(paste0(as.character(volumes_parent[1]),"/app_outcome/non_countable_time/"), full.names=T,
                     pattern = paste0(input$inSurveyID,
                                      "_", input$inStationID,
