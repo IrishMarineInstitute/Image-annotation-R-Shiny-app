@@ -398,7 +398,7 @@ server <- function(input, output, session) {
   VidOpID <- reactive({
     # If not using SIC-matching method:
     if (input$inreviewer != "SIC_matching") {
-      unique(surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID) # unique() needed in case the same counter is in more than one survey
+      unique(na.omit(surveys_counters[surveys_counters["counter"]==input$inCounterID,]$VideoOperatorID)) # unique() needed in case the same counter is in more than one survey
     } else {
     # If using SIC-matching method:
       "999"
@@ -735,14 +735,15 @@ server <- function(input, output, session) {
                          as.POSIXct(ex$DateTimeOriginal[1], format="%Y-%b-%d %H:%M:%OS"),
                          units = "secs")
     
+    # return(hms(seconds = seq(0, as.numeric(tot.time), length=length(jpgsFiles$jpgsNames))))
     pre_all.times <- hms(seconds = seq(0, as.numeric(tot.time), length=length(jpgsFiles$jpgsNames)))
     return(substring(pre_all.times, 4, 8))
-    
   })
   
   # displaying the time of the current image as mm:ss.
   # Time as 00:00 first image, XX:XX last image (usually 10:00 for UWTV footage)
   output$timer <- renderText({
+    # substring(all.times()[input$inSlider], 4, 8)
     all.times()[input$inSlider]
   })
   
@@ -790,7 +791,8 @@ server <- function(input, output, session) {
                                                                                               "minute",
                                                                                               "seconds_off")))
   observeEvent({input$start}, { # but, as soon as we press input$start, we take the real number of minutes in the footage
-    rvSeconds$tableNonsecs <- rvSeconds$tableNonsecs[1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1),]
+    # rvSeconds$tableNonsecs <- rvSeconds$tableNonsecs[1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1),]
+    rvSeconds$tableNonsecs <- rvSeconds$tableNonsecs[1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1),]
   })
   
   
@@ -1146,14 +1148,17 @@ server <- function(input, output, session) {
                                   stop = integer(0))
   
   observeEvent({input$startTime},{
-    textStartStop$start <- substring(all.times()[input$inSlider], 1, 8)
+    # textStartStop$start <- substring(all.times()[input$inSlider], 1, 8)
+    textStartStop$start <- all.times()[input$inSlider]
   })
   observeEvent({input$stopTime},{
-    textStartStop$stop <- substring(all.times()[input$inSlider], 1, 8)
+    # textStartStop$stop <- substring(all.times()[input$inSlider], 1, 8)
+    textStartStop$stop <- all.times()[input$inSlider]
   })
   # showing to the operator the time section selected
   output$textTime <- renderText({
-    paste0("log non-countable time:\n", substring(textStartStop$start, 4, 8 ), "-", substring(textStartStop$stop, 4, 8))
+    # paste0("log non-countable time:\n", substring(textStartStop$start, 4, 8 ), "-", substring(textStartStop$stop, 4, 8))
+    paste0("log non-countable time:\n", textStartStop$start, "-", textStartStop$stop)
   })
   
   # clicking on the confirmTime button will create a .csv file with the new non-countable time section
@@ -1168,12 +1173,14 @@ server <- function(input, output, session) {
                                      "_", ".*.",
                                      "_seconds_off.csv"))) == 0 | rvSeconds$tableNonsecs$counter_ID == input$inCounterID) {
       
-        if (substring(textStartStop$start, 4, 5) != substring(textStartStop$stop, 4, 5)) {
+        # if (substring(textStartStop$start, 4, 5) != substring(textStartStop$stop, 4, 5)) {
+        if (substring(textStartStop$start, 1, 2) != substring(textStartStop$stop, 1, 2)) {
       showModal(modalDialog(title ="Warning:",
                             HTML("Non-countable time section must be in one unique minute<br>
                                  Set 'start' and 'stop' times in the same minute")))
       
-    } else if (substring(textStartStop$start, 7, 8) > substring(textStartStop$stop, 7, 8)) {
+    # } else if (substring(textStartStop$start, 7, 8) > substring(textStartStop$stop, 7, 8)) {
+    } else if (substring(textStartStop$start, 4, 5) > substring(textStartStop$stop, 4, 5)) {
       showModal(modalDialog(title ="Warning:",
                             HTML("Start time must be set up before stop time")))
       } else {
@@ -1185,8 +1192,10 @@ server <- function(input, output, session) {
                                                       textStartStop$stop,
                                                       "non_countable_time",
                                                       VidOpID(),
-                                                      as.numeric(substring(textStartStop$start, 4, 5)) + 1,
-                                                      paste(substring(textStartStop$start, 7,9):substring(textStartStop$stop, 7,9), collapse="_"))
+                                                      # as.numeric(substring(textStartStop$start, 4, 5)) + 1,
+                                                      as.numeric(substring(textStartStop$start, 1, 2)) + 1,
+                                                      # paste(substring(textStartStop$start, 7,9):substring(textStartStop$stop, 7,9), collapse="_"))
+                                                      paste(substring(textStartStop$start, 4, 5):substring(textStartStop$stop, 4, 5), collapse="_"))
       
       write.table(rvTime$tableTime,
                 file = paste0(as.character(volumes_parent[1]), "/app_outcome/non_countable_time/",
@@ -1205,12 +1214,15 @@ server <- function(input, output, session) {
                            colClasses = rep("character", 9))
 
       
-      
+
       rvSeconds$tableNonsecs$survey <- input$inSurveyID
       rvSeconds$tableNonsecs$station <- input$inStationID
       rvSeconds$tableNonsecs$counter_ID <- input$inCounterID
       rvSeconds$tableNonsecs$VideoOperatorID <- VidOpID()
-      rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
+      # rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
+      rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)
+      
+
       for(i in unique(rvSeconds$tableNonsecs$minute)) {
         non_calc_cur <- subset(non_calc, minute == i)
         non_secs_cur <- length(unique(as.numeric(unlist(strsplit(non_calc_cur$seconds, '_')))))
@@ -1493,7 +1505,8 @@ observeEvent(input$delete_time, {
     rvSeconds$tableNonsecs$station <- input$inStationID
     rvSeconds$tableNonsecs$counter_ID <- input$inCounterID
     rvSeconds$tableNonsecs$VideoOperatorID <- VidOpID()
-    rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
+    # rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)
+    rvSeconds$tableNonsecs$minute <- 1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)
     for(i in unique(rvSeconds$tableNonsecs$minute)) {
       non_calc_cur <- subset(non_calc, minute == i)
       non_secs_cur <- length(unique(as.numeric(unlist(strsplit(non_calc_cur$seconds, '_')))))
@@ -1570,13 +1583,15 @@ observeEvent({feat$counter}, {
   rv$tablebase[nrow(rv$tablebase)+1,] = c(input$inSurveyID,
                                           input$inStationID,
                                           input$inCounterID,
-                                          substring(all.times()[input$inSlider], 4, 8),
+                                          # substring(all.times()[input$inSlider], 4, 8),
+                                          all.times()[input$inSlider],
                                           input$inSlider,
                                           feat$what,
                                           input$plot_click[1:2],
                                           format(Sys.time(), "%d-%b-%Y %X"),
                                           VidOpID(),
-                                          as.numeric(substring(all.times()[input$inSlider], 4, 5)) + 1)
+                                          # as.numeric(substring(all.times()[input$inSlider], 4, 5)) + 1)
+                                          as.numeric(substring(all.times()[input$inSlider], 1, 2)) + 1)
   # Order rv$tablebase by still number
   rv$tablebase <- rv$tablebase[order(as.numeric(as.character(rv$tablebase$still_n))),]
   
@@ -1686,9 +1701,11 @@ observeEvent({feat$counter}, {
   #   return(rvCol)
   # })
   rvColor <- reactive({
-    rvCol <- setNames(data.frame(matrix(ncol = (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1), nrow = 3)), c(1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)))
+    # rvCol <- setNames(data.frame(matrix(ncol = (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1), nrow = 3)), c(1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)))
+    rvCol <- setNames(data.frame(matrix(ncol = (as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1), nrow = 3)), c(1:(as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)))
     df <- t(rvSeconds$tableNonsecs[,c("minute", "seconds_off")])
-    rvCol <- rvCol[1:2,-c((((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))]
+    # rvCol <- rvCol[1:2,-c((((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))]
+    rvCol <- rvCol[1:2,-c((((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)*2))]
     rvCol[1,] <- df[1,]
     rvCol[2,] <- df[2,]
     dataCol_df <- ncol(rvCol)
@@ -1719,10 +1736,13 @@ observeEvent({feat$counter}, {
                                  headerCallback = JS("function(thead, data, start, end, display){",
                                                      "  $(thead).remove();",
                                                      "}"),
-                                 columnDefs = list(list(visible=FALSE, targets=(((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2)))
+                                 # columnDefs = list(list(visible=FALSE, targets=(((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2)))
+                                 columnDefs = list(list(visible=FALSE, targets=(((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)*2))/2)+1) : ((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)*2)))
                                  )) %>%
-      formatStyle(columns = 1:((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2),
-                  valueColumns = (((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1):((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2),
+      # formatStyle(columns = 1:((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2),
+      formatStyle(columns = 1:((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)*2),
+                  # valueColumns = (((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2))/2)+1):((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 4, 5)) + 1)*2),
+                  valueColumns = (((((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)*2))/2)+1):((as.numeric(substring(all.times()[length(jpgsFiles$jpgsNames)], 1, 2)) + 1)*2),
                   backgroundColor = styleEqual(c('0', '1'),
                                                c("lightgreen", "tomato"), default="bisque"),
                   color="black")
