@@ -664,38 +664,30 @@ server <- function(input, output, session) {
 
   # aa is the still that we want to display (it will be a number)
   aa <- reactive({
+    
+    input$pressedKey # this will activate the reactive everytime a key is pressed. To allow pressing the same key twice in a row.
 
     if (go() > 0) { # only works if go is activated
 
     if (is.null(input$coordinates_rows_selected)) { # only works if there is no row selected on the table
 
-
-    if (input$pressedKeyId == 39) { # right key for play
+    if (input$pressedKeyId %in% c(39, 68)) { # right/d key for play
       a <- input$inSlider + 1
-    }
-
-
-    if (input$pressedKeyId == 37) { # left key for backwards
+    } else if (input$pressedKeyId %in% c(37, 65)) { # left/a key for backwards
       a <- input$inSlider - 1
-    }
-
-
-    if (input$pressedKeyId == 38) { #  up key for pause
-      a <- isolate(input$inSlider)
-    }
-
-    if (input$pressedKeyId == 40) { # down key for pause
-      a <- isolate(input$inSlider)
-    }
-    }
-
-    if (!is.null(input$coordinates_rows_selected)) { # if there is a row selected in the table
-
+      } else if (input$pressedKeyId == 67) { # c goes 2 seconds back
+        a <- isolate(input$inSlider + 24)
+        } else if (input$pressedKeyId == 90) { # z goes 2 seconds forward
+          a <- isolate(input$inSlider - 24)
+          } else if (input$pressedKeyId %in% c(38, 40, 83, 87)) { #  up/down/w/s key for pause
+            a <- isolate(input$inSlider)
+            }
+    } else if (!is.null(input$coordinates_rows_selected)) { # if there is a row selected in the table
       a <- last$old # value coming from the selected row in the table
-
     }
-      }
-
+      
+    }
+    
     Sys.sleep(sleep()) # if the speed selected is not "normal" there will be a delay between images
 
     return(a)
@@ -1309,7 +1301,7 @@ server <- function(input, output, session) {
     # annotating the burrows
 observeEvent(input$plot_click, {
   
-  if(input$pressedKeyId == 38) { # only works if the video is paused with the up arrow key
+  if(input$pressedKeyId %in% c(38, 40, 83, 87)) { # only works if the video is paused with the up/down/w/s arrow keys
   
     feat$what <- "BURROW"
     
@@ -1367,17 +1359,9 @@ observeEvent(input$plot_click, {
         }
     
     
-    
-    
-    
-    
-    
-    
-    
-    
   } else { # if the video is not paused with the up arrow key
     showModal(modalDialog(title ="For correct annotation:",
-                          HTML("(1) video must be in pause  (make sure pressing up arrow) and<br>
+                          HTML("(1) video must be in pause  (press any up/down/w/s key) and<br>
                                 (2) wait until a blue circle appears in the picture")))
   }
   })
