@@ -6,7 +6,9 @@ This R Shiny application was built to annotate footage (HD-stills) from _Nephrop
 ## Dependencies
 
 The app is stable under R (Version 3.6.3), RStudio (Version 1.1.463) and the following R libraries:  
-"colorspace", "DT", "exifr", "gtools", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets"  
+"colorspace", "DT", "exifr", "gtools", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets" 
+
+Few extra libraries for Annotations comparison / matching code (new feature 2020): "epiR", "ggplot2", "gridExtra", "reshape2")
 
 Two additional software were used to ensure correct extraction of exif information from the images:
 
@@ -47,7 +49,7 @@ Set up in the code by...
 To ensure proper functioning of the app, the images must be:
 * .jpg files
 * Maximum size of 135 kB
-* Dimmensions of 1229 x 691 pixels (for 22-27 inches monitors)
+* Dimmensions of 1229 x 691 pixels (for 24-27 inches monitors)
 
 
 #### Subfolder for the outputs:
