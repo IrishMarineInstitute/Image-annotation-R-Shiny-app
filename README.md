@@ -84,8 +84,8 @@ Once the app is running, the user should follow these steps:
   * Up arrow / w / down arrow / s: Pause
   * Rigth arrow / d: Play
   * Left arrow / a: Rewind
-  * z: go 24 stills back
-  * c: go 24 stills forward
+  * z: go 24 stills back (new feature 2020)
+  * c: go 24 stills forward (new feature 2020)
   * Timer under the image shows current time along the station (starts on 00:00, and should finish on 10:00 for 10 minute stations)
   * Speed selector next to the timer to make the 'video' slower
   * Annotation of footage:
