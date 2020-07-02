@@ -28,7 +28,7 @@ Set up in the code by...
 "volumes_parent <- c(Home = "C:/Parent_folder", getVolumes()())""
 
 
-### Inside the parent folder we need four subfodlers:
+### Inside the parent folder we need four subfolders:
 
 <img src="readme_screenshots/folder_structure.png">
 
