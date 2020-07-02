@@ -63,7 +63,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
            actionButton("start", "5th: Load stn")), # 4th press button to load station
     column(2,
            tags$h6("6th: press an arrow to start"), # 5th press arrow on keyboard to plot images on screen
-           tags$h6("up=PAUSE ; right=PLAY ; left=REWIND")), # app driving instructions
+           tags$h6("up/w/down/s=PAUSE ; right/d=PLAY ; left/a=REWIND")), # app driving instructions
     column(1,
            tags$h6("stills for this station"),
            verbatimTextOutput("jpgnumber")), # check number of images on the folder/station
