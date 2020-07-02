@@ -8,7 +8,7 @@ This R Shiny application was built to annotate footage (HD-stills) from _Nephrop
 The app is stable under R (Version 3.6.3), RStudio (Version 1.1.463) and the following R libraries:  
 "colorspace", "DT", "exifr", "gtools", "hms", "jpeg", "magick", "plotrix", "raster", "shiny", "shinyBS", "shinyFiles", "shinyjs", "shinythemes", "shinyWidgets" 
 
-Few extra libraries for Annotations comparison / matching code (new feature 2020): "epiR", "ggplot2", "gridExtra", "reshape2")
+Few extra libraries for Annotations comparison / matching code (new feature 2020): "epiR", "ggplot2", "gridExtra", "reshape2"
 
 Two additional software were used to ensure correct extraction of exif information from the images:
 
@@ -32,7 +32,7 @@ Set up in the code by...
 
 <img src="readme_screenshots/folder_structure.png">
 
-#### Subfolder for the app
+#### Subfolder for the app:
 * No need to set up in the code.  
 * Example: C:/Parent_folder/subfolder_with_the_app  
 * Inside this subfolder we will have the app.R script with all the code.
@@ -62,7 +62,8 @@ To ensure proper functioning of the app, the images must be:
 Inside the subsubfolder for the counts we will have a .csv file called "SURVEYS_and_COUNTERS.csv" with three columns: "survey", "counter" and "VideoOperatorID". This .csv file must be filled out by the SIC.  
 
 #### Subfolder for the Annotations comparison / matching code (new feature 2020):
-* Details below
+* Specific name: C:/Parent_folder/matching
+* Inside this subfolder we will have the "matching_annotations.R" script
 
 
 
