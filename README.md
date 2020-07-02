@@ -26,12 +26,15 @@ Set up in the code by...
 "volumes_parent <- c(Home = "C:/Parent_folder", getVolumes()())""
 
 
-### Inside the parent folder we need three subfodlers:
+### Inside the parent folder we need four subfodlers:
+
+<img src="readme_screenshots/folder_structure.png">
 
 #### Subfolder for the app
 * No need to set up in the code.  
 * Example: C:/Parent_folder/subfolder_with_the_app  
 * Inside this subfolder we will have the app.R script with all the code.
+
 
 #### Subfolder for the images:
 * Set up in the code by...  
@@ -56,8 +59,14 @@ To ensure proper functioning of the app, the images must be:
 * C:/Parent_folder/app_outcome/counts  
 Inside the subsubfolder for the counts we will have a .csv file called "SURVEYS_and_COUNTERS.csv" with three columns: "survey", "counter" and "VideoOperatorID". This .csv file must be filled out by the SIC.  
 
+#### Subfolder for the Annotations comparison / matching code (new feature 2020):
+* Details below
+
+
 
 ## app GUI
+
+<img src="readme_screenshots/app_screenshot.png">
 
 Once the app is running, the user should follow these steps:
 * Select a Survey ID
@@ -128,7 +137,7 @@ mikel.aristegui@marine.ie
 
 To cite this software, please use the following text:
 
-Aristegui, M. (2019) Image annotation R Shiny app. Marine Institute. http://doi.org/c8jt
+Aristegui, M. (2020) Image annotation R Shiny app. Marine Institute. http://doi.org/c8jt
 
 
 ## License
