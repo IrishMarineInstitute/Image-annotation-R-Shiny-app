@@ -1760,7 +1760,7 @@ observeEvent({feat$counter}, {
                                      pattern = input$inSurveyID),
                                pattern = "counts.csv", value = T),
                           pattern = "SURVEYS_and_COUNTERS|Box|ERROR|SIC_", inv=T, value=T)
-        pairs.stn <- sub("*_(.*?) *_.*", "_\\1", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs))
+        pairs.stn <- sub("*_(.?) *_.*", "_\\1", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs))
         pairs <- as.data.frame(cbind("file" = as.character(pre.pairs), "st" = as.character(pairs.stn)))
         pairs <- subset(pairs, st %in% unique(pairs$st[duplicated(pairs$st)])) # only if more than 1 counter has counted the station
         pairs[,1:2] <- lapply(pairs[,1:2], as.character)
