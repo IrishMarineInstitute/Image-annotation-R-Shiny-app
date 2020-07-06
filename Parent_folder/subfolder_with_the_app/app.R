@@ -78,11 +78,11 @@ ui <- fluidPage(theme = shinytheme("superhero"),
     tags$head(tags$style("#lic{font-size: 12px; text-align:center}")),
     tags$style("#lice{text-align:justify}"),
     bsModal("lice", HTML("Image annotation R Shiny app <br>
-    Copyright (C) 2019. Mikel Aristegui*"), "lic", size = "large",
+    Copyright (C) 2020. Mikel Aristegui*"), "lic", size = "large",
             HTML("
 
     Recommended citation:
-    <p>Aristegui, M. (2019) Image annotation R Shiny app. Marine Institute. <a href=http://doi.org/c8jt >http://doi.org/c8jt</a></p>
+    <p>Aristegui, M. (2020) Image annotation R Shiny app. Marine Institute. <a href=http://doi.org/d24n >http://doi.org/d24n</a></p>
 
     <hr>
 
