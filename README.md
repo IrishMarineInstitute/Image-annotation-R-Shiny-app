@@ -142,7 +142,7 @@ mikel.aristegui@marine.ie
 
 To cite this software, please use the following text:
 
-Aristegui, M. (2020) Image annotation R Shiny app. Marine Institute. http://doi.org/c8jt
+Aristegui, M. (2020) Image annotation R Shiny app. Marine Institute. http://doi.org/d24n
 
 
 ## License
