@@ -1761,11 +1761,12 @@ observeEvent({feat$counter}, {
                                pattern = "counts.csv", value = T),
                           pattern = "SURVEYS_and_COUNTERS|Box|ERROR|SIC_", inv=T, value=T)
         
-        if (any(grepl("stn_", pre.pairs) == T)) {
-          pairs.stn <- sub("*_(.?) *_.*", "_\\1", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs)) # station format: stn_250
-        } else {
-          pairs.stn <- sub("*_(.?) *.*", "\\", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs)) # station format: stn250
-        }
+        # if (any(grepl("stn_", pre.pairs) == T)) {
+          pairs.stn <- sub("(^[^_]+[_][^_]+)(.+$)", "\\1", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs)) # NEW station format: stn_250
+          # pairs.stn <- sub("*_(.?) *_.*", "_\\1", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs)) # OLD station format: stn_250
+        # } else {
+          # pairs.stn <- sub("*_(.?) *.*", "\\", sub(paste0(".*", input$inSurveyID, "_ *(.*?) *_counts.*"), "\\1", pre.pairs)) # station format: stn250
+        # }
         
         pairs <- as.data.frame(cbind("file" = as.character(pre.pairs), "st" = as.character(pairs.stn)))
         pairs <- subset(pairs, st %in% unique(pairs$st[duplicated(pairs$st)])) # only if more than 1 counter has counted the station
