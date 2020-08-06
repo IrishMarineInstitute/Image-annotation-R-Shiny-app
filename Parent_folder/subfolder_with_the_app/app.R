@@ -507,6 +507,8 @@ server <- function(input, output, session) {
       
       jpgsFiles$originalNames <- as.character(readnames[,1])
       
+    }
+      
       if(file_test("-f",
                    paste0(as.character(volumes_parent[1]),
                           "/reduced_stn/",
@@ -520,8 +522,7 @@ server <- function(input, output, session) {
         # If this CounterID has never counted this station before,
         # then read the .txt with the original names
         
-        
-        jpgsFiles$jpgsNames <- as.character(readnames[,1])
+        jpgsFiles$jpgsNames <- jpgsFiles$originalNames
         
         if (input$inreviewer == "SIC_matching") { # Create .txt and counts.csvif the counter is SIC_counter1_counter2
           
@@ -623,7 +624,6 @@ server <- function(input, output, session) {
         jpgsFiles$jpgsNames <- as.character(readnames[,1])
         
         }
-      }
       
     } else {
       showModal(modalDialog(title ="Please, select your:",
@@ -1946,7 +1946,7 @@ observeEvent({feat$counter}, {
       
       removeModal()
       
-      setProgress(5/5, detail = paste0("Done: You can now press 'Load stn'"))
+      setProgress(5/5, detail = paste0("Wait until this window disappears and then press 'Load stn'"))
       Sys.sleep(2.50)
       # Disable the selectinputbuttons
       shinyjs::disable("surveyID")
