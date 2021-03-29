@@ -139,16 +139,28 @@ ui <- fluidPage(theme = shinytheme("superhero"),
                column(2, uiOutput("pp")),
                column(2, uiOutput("kp")),
                column(2, uiOutput("trawl")),
-               column(2, uiOutput("lt")))),
+               column(2, uiOutput("lt")),
+               bsTooltip("vm", "Sea pen: Virgularia mirabilis", placement = "top", trigger = "hover",
+                         options = NULL),
+               bsTooltip("fq", "Sea pen: Funiculina quadrangularis", placement = "top", trigger = "hover",
+                         options = NULL),
+               bsTooltip("pp", "Sea pen: Pennatula phosphorea", placement = "top", trigger = "hover",
+                         options = NULL),
+               bsTooltip("kp", "Sea pen: Kophobelemnon stelliferum", placement = "top", trigger = "hover",
+                         options = NULL))),
              
              fluidRow(
                # Only for reviewers with ancyllary:
                conditionalPanel(condition="input.inreviewer.indexOf('1st reviewer') !== -1 ||
                                 input.inreviewer.indexOf('only ancillary') !== -1", 
                column(2, uiOutput("lm")),
+               bsTooltip("lm", "Feather star: Leptometra celtica", placement = "top", trigger = "hover",
+                         options = NULL),
                 # Marine Institute version
                conditionalPanel(condition="input.inSurveyID.indexOf('IFREMER') == -1",
-                                column(2, uiOutput("sql"))
+                                column(2, uiOutput("sql")),
+                                bsTooltip("sql", "Squat lobster: Munida", placement = "top", trigger = "hover",
+                                          options = NULL)
                )
                ,
                 # Ifremer version. Special request for counting Squat lobsters
@@ -158,6 +170,7 @@ ui <- fluidPage(theme = shinytheme("superhero"),
                ,
                column(2, uiOutput("fs"))),
                column(6, uiOutput("comm"))),
+             
              
              # Only for reviewers with ancyllary:
              fluidRow(style = "height:35px;",
