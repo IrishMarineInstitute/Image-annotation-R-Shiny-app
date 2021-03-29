@@ -168,8 +168,11 @@ ui <- fluidPage(theme = shinytheme("superhero"),
                                 column(2, uiOutput("sqlCN"), actionGroupButtons(c("sqlCless","sqlCmore"), c("-","+"), direction="horizontal", size="sm"))
                )
                ,
-               column(2, uiOutput("fs"))),
-               column(6, uiOutput("comm"))),
+               column(2, uiOutput("fs")),
+               column(2, uiOutput("amu")),
+               bsTooltip("amu", "Anthozoa", placement = "top", trigger = "hover",
+                         options = NULL)),
+               column(4, uiOutput("comm"))),
              
              
              # Only for reviewers with ancyllary:
@@ -802,12 +805,12 @@ server <- function(input, output, session) {
   
   
   ## Table for ancillary data  
-  n_variables <- 16
+  n_variables <- 17
   rvAncillary <- reactiveValues(tableAncillary = setNames(data.frame(matrix(ncol = n_variables, nrow = 0)), c("survey",
                                                                                                               "station",
                                                                                                               "counter_ID",
                                                                                                               "VAM", "FAQ", "PNP", "KOP",
-                                                                                                              "LMC", "squat_lobster", "fish",
+                                                                                                              "LMC", "squat_lobster", "fish", "AMU",
                                                                                                               "Nephrops_IN",
                                                                                                               "Nephrops_OUT",
                                                                                                               "trawl_marks",
@@ -948,6 +951,9 @@ server <- function(input, output, session) {
   output$fs <- renderUI({
     selectInput("infs", "Fish", choices = list("no","yes"), selected=rvAncillary$tableAncillary$fish)
   })
+  output$amu <- renderUI({
+    selectInput("inamu", "AMU", choices = list("no","yes"), selected=rvAncillary$tableAncillary$AMU)
+  })
   output$comm <- renderUI({
     textAreaInput("incomm", "Comments", value=rvAncillary$tableAncillary$Comments, height = "35px", placeholder="Add comments here")
   })
@@ -971,7 +977,7 @@ server <- function(input, output, session) {
   all.update <- reactive(paste0(input$invm, input$infq, input$inpp, input$inkp,
                                 input$inlm,
                                 input$insql, input$sqlCmore, input$sqlCless,
-                                input$infs,
+                                input$infs, input$inamu,
                                 input$nepInmore, input$nepInless,
                                 input$nepOutmore, input$nepOutless,
                                 input$intrawl,
@@ -1060,12 +1066,12 @@ server <- function(input, output, session) {
       if (paste0(input$invm, input$infq, input$inpp, input$inkp,
                  input$inlm,
                  input$insql, input$sqlCmore, input$sqlCless,
-                 input$infs,
+                 input$infs, input$inamu,
                  input$nepInmore, input$nepInless,
                  input$nepOutmore, input$nepOutless,
                  input$incomm,
                  input$intrawl,
-                 input$inlt) != "nononononono00no0000nono") { # to avoid saving without inputs from the scientist
+                 input$inlt) != "nononononono00nono0000nono") { # to avoid saving without inputs from the scientist
  
       # if (input$start > 0) {
   
@@ -1078,6 +1084,7 @@ server <- function(input, output, session) {
                                          input$inlm,
                                          sqlCfinal(),
                                          input$infs,
+                                         input$inamu,
                                          (orig.nepIn() + input$nepInmore - input$nepInless),
                                          (orig.nepOut() + input$nepOutmore - input$nepOutless),
                                          input$intrawl,
@@ -1117,6 +1124,7 @@ server <- function(input, output, session) {
                                          input$inlm,
                                          sqlCfinal(),
                                          input$infs,
+                                         input$inamu,
                                          (orig.nepIn() + input$nepInmore - input$nepInless),
                                          (orig.nepOut() + input$nepOutmore - input$nepOutless),
                                          input$intrawl,
