@@ -2,6 +2,8 @@
 
 This R Shiny application was built to annotate footage (HD-stills) from _Nephrops norvegicus_ UWTV surveys carried out by the Marine Institute (Ireland).
 
+You can find detailed information about these surveys and a demo video on how to use the annotation app at https://www.marine.ie/site-area/areas-activity/fisheries-ecosystems/nephrops-under-water-tv-surveys
+
 
 ## Dependencies
 
